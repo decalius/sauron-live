@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sauron Presentation Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+  <h1>Sauron — Demo</h1>
+  <p>Sample offline list from <code>sample_data/map_status_sample.json</code></p>
+  <pre id="out"></pre>
+
+  <script>
+    fetch('sample_data/map_status_sample.json')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2)
+      })
+      .catch(e => { document.getElementById('out').textContent = String(e) })
+  </script>
+</body>
+</html>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Sauron Presentation</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link href="https://unpkg.com/kepler.gl@3.2.5/umd/keplergl.min.css" rel="stylesheet">
+    <style>body{margin:0;background:#111;color:#ddd;font-family:Arial,helvetica,sans-serif}#note{position:fixed;left:12px;top:12px;z-index:10000;background:rgba(0,0,0,0.6);padding:8px;border-radius:6px}</style>
+  </head>
+  <body>
+    <div id="note">Presentation demo — sample data</div>
+    <div id="app" style="width:100vw;height:100vh"></div>
+    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/redux@4.2.1/dist/redux.min.js"></script>
+    <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js"></script>
+    <script src="https://unpkg.com/kepler.gl@3.2.5/umd/keplergl.min.js"></script>
+    <script>
+      // Minimal loader: fetch sample data and display in Kepler (kepler config omitted for brevity)
+      (async function(){
+        const res = await fetch('./sample_data/map_status_sample.json');
+        const rows = await res.json();
+        const fields = [
+          {name:'store', type:'string'},
+          {name:'dc_name', type:'string'},
+          {name:'status', type:'string'},
+          {name:'status_code', type:'integer'},
+          {name:'Latitude', type:'real'},
+          {name:'Longitude', type:'real'}
+        ];
+        const data = {fields, rows: rows.map(r=>[r.store,r.dc_name,r.status,r.status_code,r.Latitude,r.Longitude])};
+        const store = window.__presentationStore = Redux.createStore(keplerGl.keplerGlReducer.initialState());
+        const KeplerComponent = keplerGl.KeplerGl;
+        const App = () => React.createElement(reactRedux.Provider,{store},React.createElement(KeplerComponent,{id:'map',mapboxApiAccessToken:''}));
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(React.createElement(reactRedux.Provider,{store},React.createElement(KeplerComponent,{id:'map',mapboxApiAccessToken:''})));
+        // Add dataset after small delay so kepler initializes
+        setTimeout(()=>{
+          store.dispatch(keplerGl.addDataToMap({datasets:{info:{label:'sample',id:'s1'},data},options:{centerMap:true}}));
+        },400);
+      })();
+    </script>
+  </body>
+</html>

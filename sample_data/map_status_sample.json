@@ -1,0 +1,72 @@
+[
+  {
+    "timestamp": "2026-02-07T13:27:00+00:00",
+    "run_id": "demo-1",
+    "store": "1004241",
+    "dc_code": "GRP",
+    "dc_name": "Grand Rapids",
+    "server_ip": "10.10.10.1",
+    "gateway_ip": "10.10.1.1",
+    "server_up": false,
+    "gateway_up": true,
+    "status": "Server Down, Gateway Up",
+    "status_code": 1,
+    "Latitude": 42.9634,
+    "Longitude": -85.6681
+  },
+  {
+    "timestamp": "2026-02-07T13:27:00+00:00",
+    "run_id": "demo-1",
+    "store": "1005000",
+    "dc_code": "DET",
+    "dc_name": "Detroit",
+    "server_ip": "10.20.20.2",
+    "gateway_ip": "10.20.2.1",
+    "server_up": true,
+    "gateway_up": true,
+    "status": "Server Up",
+    "status_code": 0,
+    "Latitude": 42.3314,
+    "Longitude": -83.0458
+  }
+]
+[
+  {
+    "timestamp": "2026-02-08T02:45:28-05:00",
+    "run_id": "20260208_024528",
+    "store": "1004241",
+    "dc_code": "1004",
+    "dc_name": "Grand Rapids",
+    "server_ip": "10.126.174.10",
+    "gateway_ip": "10.126.174.1",
+    "server_up": "false",
+    "gateway_up": "true",
+    "status": "yellow",
+    "status_code": 1,
+    "Latitude": 43.7148182,
+    "Longitude": -85.4901306,
+    "Address": "1330 North State",
+    "City": "Big Rapids",
+    "State": "MI",
+    "ZIP": "49307"
+  },
+  {
+    "timestamp": "2026-02-08T02:45:28-05:00",
+    "run_id": "20260208_024528",
+    "store": "1001002",
+    "dc_code": "1001",
+    "dc_name": "Columbus",
+    "server_ip": "10.115.191.10",
+    "gateway_ip": "10.115.191.1",
+    "server_up": "true",
+    "gateway_up": "",
+    "status": "green",
+    "status_code": 0,
+    "Latitude": 40.088939,
+    "Longitude": -83.061863,
+    "Address": "2665 W Dublin Granville Rd",
+    "City": "Columbus",
+    "State": "OH",
+    "ZIP": "43235"
+  }
+]
