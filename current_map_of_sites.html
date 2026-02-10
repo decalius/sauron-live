@@ -585,7 +585,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                     console.log('DEBUG offline count:', offline.length);
                     console.log('DEBUG red count:', groups.red.length, groups.red);
                     console.log('DEBUG yellow count:', groups.yellow.length, groups.yellow);
-                    const redHtml = renderGroup('TAMS Server Down', 'status-red', groups.red);
+                    const redHtml = renderGroup('Server Down', 'status-red', groups.red);
                     const yellowHtml = renderGroup('Gateway Up', 'status-yellow', groups.yellow);
                     html += redHtml;
                     html += yellowHtml;
