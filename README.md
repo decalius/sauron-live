@@ -17,6 +17,12 @@ No proprietary store data is included. Provide your own `stores.csv` and optiona
 
 1. **Start a local web server** in this folder:
    ```bash
+   # Windows
+   cd path\to\sauron-presentation
+   python -m http.server 8000
+
+   # Linux/macOS
+   cd path/to/sauron-presentation
    python -m http.server 8000
    ```
 
@@ -45,11 +51,19 @@ To scan your own stores with your data:
 
 2. **Run the scanner:**
    ```bash
+   # Windows
+   python sauron.py stores.csv
+
+   # Linux/macOS
    python sauron.py stores.csv
    ```
 
 3. **Or with gateway diagnostics:**
    ```bash
+   # Windows
+   python sauron.py stores.csv --gateway-check
+
+   # Linux/macOS
    python sauron.py stores.csv --gateway-check
    ```
 
@@ -74,6 +88,10 @@ Replace `sample_data/map_status_sample.json` with your own scan results:
 python sauron.py your_stores.csv --gateway-check --output-dir ./logs
 
 # Copy the latest feed to the sample directory
+# Windows
+copy logs\map_status_latest.json sample_data\map_status_sample.json
+
+# Linux/macOS
 cp logs/map_status_latest.json sample_data/map_status_sample.json
 
 # Reload the browser — dashboard updates automatically
@@ -141,6 +159,19 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
 ---
 
 **Version:** 3.0 | **Last Updated:** February 2026 | **Status:** Demo Ready
+
+## Example Paths (No Local Paths)
+Use these placeholders instead of real machine paths:
+
+```text
+Windows:
+   path\to\sauron-presentation\
+   path\to\sauron-presentation\logs\
+
+Linux/macOS:
+   path/to/sauron-presentation/
+   path/to/sauron-presentation/logs/
+```
 
 ## CLI Flags
 ```
