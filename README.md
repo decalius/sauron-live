@@ -1,6 +1,4 @@
-# Sauron — Presentation Demo
-
-A lightweight, presentation-ready sample of the **Sauron** network scanner, designed for live demos and stakeholder presentations.
+## Sauron 
 
 ## What You're Looking At
 
@@ -9,11 +7,11 @@ This repo contains:
 - **sample_data/map_status_sample.json** — Sample scan results (green ✓, yellow ⚠, red ✗ statuses)
 - **sauron.py** — Scanner tool (simplified demo version showing CLI interface)
 
-No proprietary store data is included. Provide your own `sites.csv` and optional `DC_LIST.csv`.
+Provide your own `sites.csv` and optional `DC_LIST.csv`.
 
 ## Quick Start (Demo Mode)
 
-### View the Dashboard
+## View the Dashboard
 
 1. **Start a local web server** in this folder:
    ```bash
@@ -40,9 +38,9 @@ No proprietary store data is included. Provide your own `sites.csv` and optional
    - A left-hand panel listing failed stores grouped by status
    - Store details on click (address, last ping time, etc.)
 
-### Run the Scanner (Locally)
+## Run the Scanner (Locally)
 
-To scan your own stores with your data:
+To scan your own sites with your data:
 
 1. **Ensure Python 3.10+ is installed:**
    ```bash
@@ -69,7 +67,7 @@ To scan your own stores with your data:
 
 4. **Output files appear in `./logs/map_status_latest.json`**
 
-### Required CSV Headers
+## Required CSV Headers
 `sites.csv` must include:
 - `StoreNumber`
 - `IPAddress`
@@ -79,7 +77,7 @@ Optional (recommended):
 
 ## Customizing the Demo
 
-### Update the Sample Data
+## Update the Sample Data
 
 Replace `sample_data/map_status_sample.json` with your own scan results:
 
@@ -97,7 +95,7 @@ cp logs/map_status_latest.json sample_data/map_status_sample.json
 # Reload the browser — dashboard updates automatically
 ```
 
-### Modify Dashboard Styling
+## Modify Dashboard Styling
 
 Edit `index.html` to adjust:
 - **Color scheme** — change RGB values for green/yellow/red markers
@@ -115,8 +113,8 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
       "timestamp": "2026-02-09T12:00:00-05:00",
       "run_id": "demo-1",
       "store": "SITE-0001",
-      "dc_code": "ALP",
-      "dc_name": "Alpha Hub",
+      "dc_code": "NE1",
+      "dc_name": "North-East Warehouse",
       "server_ip": "198.51.100.10",
       "gateway_ip": "198.51.100.1",
     "server_up": true,
@@ -131,36 +129,24 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
 ]
 ```
 
-## Presentation Tips
-
 - **Pre-scan before the meeting:** Run `python sauron.py sites.csv --gateway-check` to generate fresh data (5-10 minutes for typical network)
 - **Use `--max-workers 500` to speed up large scans** (completes sooner)
 - **Export the map:** Use browser's screenshot or developer tools to capture dashboard for slides
 - **Show the offline panel:** Click a failed store to highlight it on the map — demonstrates geo-centric triage
 - **Highlight the yellow group:** Shows how the tool distinguishes server failures (red) from network problems (yellow)
 
-## Key Points for Stakeholders
+## Key Points
 
 | Feature | Value |
 |---------|-------|
-| **Speed** | 5,000+ stores in 2–5 minutes (parallelized) |
+| **Speed** | 5,000+ sites in 2–5 minutes (parallelized) |
 | **Accuracy** | Dual-check (ping + retry on timeout) |
 | **Intelligence** | Distinguishes hardware failure from network outage |
 | **Visibility** | Geo-centric dashboard: pinpoint affected regions instantly |
 | **Integration** | JSON + CSV outputs for Power BI, Tableau, custom dashboards |
 | **Lightweight** | Runs on any OS (Windows/Linux); Python only; no external dependencies |
 
-## Next Steps
-
-- **Production Deployment:** See the full [Sauron repository](https://github.com/decalius/Sauron) for comprehensive documentation
-- **Internal Docs:** Check the [internal repo](https://github.com/decalius/Sauron-GPC) for architecture and deployment guides
-- **Questions?** Refer to the full README in the main repository for troubleshooting and advanced options
-
----
-
-**Version:** 3.0 | **Last Updated:** February 2026 | **Status:** Demo Ready
-
-## Example Paths (No Local Paths)
+## Example Paths 
 Use these placeholders instead of real machine paths:
 
 ```text
