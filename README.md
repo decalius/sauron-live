@@ -3,7 +3,7 @@
 ## What You're Looking At
 
 This repo contains:
-- **index.html** — Interactive geospatial dashboard showing store network health
+- **index.html** — Interactive geospatial dashboard showing site network health
 - **sample_data/map_status_sample.json** — Sample scan results (green ✓, yellow ⚠, red ✗ statuses)
 - **sauron.py** — Scanner tool (simplified demo version showing CLI interface)
 
@@ -69,7 +69,7 @@ To scan your own sites with your data:
 
 ## Required CSV Headers
 `sites.csv` must include:
-- `StoreNumber`
+- `siteNumber`
 - `IPAddress`
 
 Optional (recommended):

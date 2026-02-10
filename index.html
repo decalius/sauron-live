@@ -43,22 +43,22 @@
         const res = await fetch('./sample_data/map_status_sample.json');
         const rows = await res.json();
         const fields = [
-          {name:'store', type:'string'},
+          {name:'site', type:'string'},
           {name:'dc_name', type:'string'},
           {name:'status', type:'string'},
           {name:'status_code', type:'integer'},
           {name:'Latitude', type:'real'},
           {name:'Longitude', type:'real'}
         ];
-        const data = {fields, rows: rows.map(r=>[r.store,r.dc_name,r.status,r.status_code,r.Latitude,r.Longitude])};
-        const store = window.__presentationStore = Redux.createStore(keplerGl.keplerGlReducer.initialState());
+        const data = {fields, rows: rows.map(r=>[r.site,r.dc_name,r.status,r.status_code,r.Latitude,r.Longitude])};
+        const site = window.__presentationsite = Redux.createsite(keplerGl.keplerGlReducer.initialState());
         const KeplerComponent = keplerGl.KeplerGl;
-        const App = () => React.createElement(reactRedux.Provider,{store},React.createElement(KeplerComponent,{id:'map',mapboxApiAccessToken:''}));
+        const App = () => React.createElement(reactRedux.Provider,{site},React.createElement(KeplerComponent,{id:'map',mapboxApiAccessToken:''}));
         const root = ReactDOM.createRoot(document.getElementById('app'));
-        root.render(React.createElement(reactRedux.Provider,{store},React.createElement(KeplerComponent,{id:'map',mapboxApiAccessToken:''})));
+        root.render(React.createElement(reactRedux.Provider,{site},React.createElement(KeplerComponent,{id:'map',mapboxApiAccessToken:''})));
         // Add dataset after small delay so kepler initializes
         setTimeout(()=>{
-          store.dispatch(keplerGl.addDataToMap({datasets:{info:{label:'sample',id:'s1'},data},options:{centerMap:true}}));
+          site.dispatch(keplerGl.addDataToMap({datasets:{info:{label:'sample',id:'s1'},data},options:{centerMap:true}}));
         },400);
       })();
     </script>

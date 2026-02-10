@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Parallel-pings all stores from the input CSV and produces machine-readable outputs
+Parallel-pings all sites from the input CSV and produces machine-readable outputs
 for dashboards.
 
 Behavior:
@@ -16,7 +16,7 @@ Behavior:
 - Also updates "latest" files in the base logs folder for convenience.
 
 NEW (Live Map Feed):
-- Writes a full “all stores” status feed:
+- Writes a full “all sites” status feed:
   - map_status_<run_id>.csv/json (per-run)
   - map_status_latest.csv/json (latest)
   - map_status_latest.geojson (published)
@@ -62,7 +62,7 @@ from collections import defaultdict
 # Default to current working directory unless SAURON_BASE_DIR is set.
 BASE_DIR = Path(os.environ.get("SAURON_BASE_DIR", "."))
 
-STORES_CSV_DEFAULT = BASE_DIR / "sites.csv"
+sites_CSV_DEFAULT = BASE_DIR / "sites.csv"
 DC_CSV_DEFAULT = BASE_DIR / "DC_LIST.csv"
 
 # Logs (per-run folders created under here)
@@ -73,7 +73,7 @@ OUTPUT_DIR_DEFAULT = BASE_DIR / "logs"
 PUBLISH_DIR_DEFAULT = BASE_DIR
 
 # Backwards-compatible names used throughout the script
-DEFAULT_CSV = str(STORES_CSV_DEFAULT)
+DEFAULT_CSV = str(sites_CSV_DEFAULT)
 DC_CSV = str(DC_CSV_DEFAULT)
 DEFAULT_OUTPUTDIR = OUTPUT_DIR_DEFAULT
 DEFAULT_PUBLISH_DIR = PUBLISH_DIR_DEFAULT
@@ -130,33 +130,33 @@ def derive_gateway_ip(server_ip: str) -> str:
     except Exception:
         return ""
 
-def first4_digits(store: str) -> str:
+def first4_digits(site: str) -> str:
     """
-    Uses leading digits of StoreNumber. Returns first 4 digits.
+    Uses leading digits of siteNumber. Returns first 4 digits.
     """
-    if not store:
+    if not site:
         return ""
-    m = _leading_digits.match(store.strip())
+    m = _leading_digits.match(site.strip())
     if not m:
         return ""
     digits = m.group(1)
     return digits[:4] if len(digits) >= 4 else digits
 
-def store_sort_key(store: str) -> Tuple[int, str]:
+def site_sort_key(site: str) -> Tuple[int, str]:
     """
     Numeric sort by leading digits, fallback to string.
     """
-    m = _leading_digits.match(store or "")
+    m = _leading_digits.match(site or "")
     if m:
-        return (int(m.group(1)), store)
-    return (10**12, store or "")
+        return (int(m.group(1)), site)
+    return (10**12, site or "")
 
 def load_rows(csv_path: Path):
     """
-    Reads StoreNumber, IPAddress, optional Gateway, and optional location columns.
+    Reads siteNumber, IPAddress, optional Gateway, and optional location columns.
 
     Required headers:
-      - StoreNumber
+      - siteNumber
       - IPAddress
 
     Optional headers:
@@ -176,7 +176,7 @@ def load_rows(csv_path: Path):
 
         norm = {h.strip().lower().replace(" ", ""): h for h in reader.fieldnames}
 
-        sn = norm.get("storenumber") or norm.get("store") or norm.get("storeno") or norm.get("storenbr")
+        sn = norm.get("sitenumber") or norm.get("site") or norm.get("siteno") or norm.get("sitenbr")
         ip = norm.get("ipaddress") or norm.get("ip") or norm.get("ipaddr")
         gw = norm.get("gateway") or norm.get("gw") or norm.get("gatewayip")
 
@@ -189,7 +189,7 @@ def load_rows(csv_path: Path):
         lon_h = norm.get("longitude") or norm.get("long") or norm.get("lng") or norm.get("lon")
 
         if not sn or not ip:
-            print("ERROR: CSV must include headers for StoreNumber and IPAddress.", file=sys.stderr)
+            print("ERROR: CSV must include headers for siteNumber and IPAddress.", file=sys.stderr)
             sys.exit(1)
 
         def _to_float(v: str):
@@ -199,12 +199,12 @@ def load_rows(csv_path: Path):
                 return None
 
         for row in reader:
-            store = (row.get(sn) or "").strip()
+            site = (row.get(sn) or "").strip()
             ipaddr = (row.get(ip) or "").strip()
             gateway = (row.get(gw) or "").strip() if gw else ""
 
             rec = {
-                "StoreNumber": store,
+                "siteNumber": site,
                 "IPAddress": ipaddr,
                 "Gateway": gateway,
                 "Address": (row.get(addr_h) or "").strip() if addr_h else "",
@@ -214,7 +214,7 @@ def load_rows(csv_path: Path):
                 "Latitude": _to_float((row.get(lat_h) or "").strip()) if lat_h else None,
                 "Longitude": _to_float((row.get(lon_h) or "").strip()) if lon_h else None,
             }
-            if store and ipaddr:
+            if site and ipaddr:
                 yield rec
 
 def load_dc_map(dc_csv_path: Path) -> Dict[str, str]:
@@ -268,15 +268,15 @@ def parallel_ping(
     quiet: bool = False
 ) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
     """
-    Parallel pings. Returns (successes, failures), each item is (store, ip).
+    Parallel pings. Returns (successes, failures), each item is (site, ip).
     """
     successes, failures = [], []
 
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = {ex.submit(ping_host, ip, count, timeout_ms): (store, ip) for store, ip in targets}
+        futs = {ex.submit(ping_host, ip, count, timeout_ms): (site, ip) for site, ip in targets}
         done = 0
         for fut in as_completed(futs):
-            store, ip = futs[fut]
+            site, ip = futs[fut]
             ok = False
             try:
                 ok = bool(fut.result())
@@ -284,45 +284,45 @@ def parallel_ping(
                 ok = False
 
             if ok:
-                successes.append((store, ip))
+                successes.append((site, ip))
             else:
-                failures.append((store, ip))
+                failures.append((site, ip))
 
             done += 1
             if (not quiet) and progress_every and done % progress_every == 0:
                 print(f"  progress: {done}/{len(targets)}")
 
-    successes.sort(key=lambda x: store_sort_key(x[0]))
-    failures.sort(key=lambda x: store_sort_key(x[0]))
+    successes.sort(key=lambda x: site_sort_key(x[0]))
+    failures.sort(key=lambda x: site_sort_key(x[0]))
     return successes, failures
 
 def check_gateways_for_failures(
     failures: List[Tuple[str, str]],
-    store_to_gateway: Dict[str, str],
+    site_to_gateway: Dict[str, str],
     timeout_ms: int,
     max_workers: int,
     progress_every: int = 0,
 ) -> Tuple[List[Tuple[str, str, str]], List[Tuple[str, str, str]]]:
     """
-    For each failed store: ping its gateway ip. Returns (gw_online, gw_offline),
-    where each item is (store, server_ip, gateway_ip)
+    For each failed site: ping its gateway ip. Returns (gw_online, gw_offline),
+    where each item is (site, server_ip, gateway_ip)
     """
     gw_targets = []
-    for store, srv_ip in failures:
-        gw_ip = store_to_gateway.get(store, "") or derive_gateway_ip(srv_ip)
+    for site, srv_ip in failures:
+        gw_ip = site_to_gateway.get(site, "") or derive_gateway_ip(srv_ip)
         if gw_ip:
-            gw_targets.append((store, srv_ip, gw_ip))
+            gw_targets.append((site, srv_ip, gw_ip))
 
     gw_online, gw_offline = [], []
     if not gw_targets:
         return gw_online, gw_offline
 
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = {ex.submit(ping_host, gw_ip, 1, timeout_ms): (store, srv_ip, gw_ip)
-                for store, srv_ip, gw_ip in gw_targets}
+        futs = {ex.submit(ping_host, gw_ip, 1, timeout_ms): (site, srv_ip, gw_ip)
+                for site, srv_ip, gw_ip in gw_targets}
         done = 0
         for fut in as_completed(futs):
-            store, srv_ip, gw_ip = futs[fut]
+            site, srv_ip, gw_ip = futs[fut]
             ok = False
             try:
                 ok = bool(fut.result())
@@ -330,16 +330,16 @@ def check_gateways_for_failures(
                 ok = False
 
             if ok:
-                gw_online.append((store, srv_ip, gw_ip))
+                gw_online.append((site, srv_ip, gw_ip))
             else:
-                gw_offline.append((store, srv_ip, gw_ip))
+                gw_offline.append((site, srv_ip, gw_ip))
 
             done += 1
             if progress_every and done % progress_every == 0:
                 print(f"  gateway progress: {done}/{len(gw_targets)}")
 
-    gw_online.sort(key=lambda x: store_sort_key(x[0]))
-    gw_offline.sort(key=lambda x: store_sort_key(x[0]))
+    gw_online.sort(key=lambda x: site_sort_key(x[0]))
+    gw_offline.sort(key=lambda x: site_sort_key(x[0]))
     return gw_online, gw_offline
 
 def group_failures_by_dc(
@@ -347,21 +347,21 @@ def group_failures_by_dc(
     dc_map: Dict[str, str]
 ) -> Dict[str, List[Tuple[str, str]]]:
     """
-    Returns dict: dc_name -> list of (store, ip)
+    Returns dict: dc_name -> list of (site, ip)
     """
     grouped = defaultdict(list)
-    for store, ip in failures:
-        dc_code = first4_digits(store)
+    for site, ip in failures:
+        dc_code = first4_digits(site)
         dc_name = dc_map.get(dc_code, f"Unknown DC {dc_code}")
-        grouped[dc_name].append((store, ip))
+        grouped[dc_name].append((site, ip))
     for dc_name in grouped:
-        grouped[dc_name].sort(key=lambda x: store_sort_key(x[0]))
+        grouped[dc_name].sort(key=lambda x: site_sort_key(x[0]))
     return dict(sorted(grouped.items(), key=lambda kv: kv[0].lower()))
 
 def write_failures_csv(path: Path, rows: List[Dict]):
     path.parent.mkdir(parents=True, exist_ok=True)
     if not rows:
-        headers = ["timestamp", "run_id", "store", "dc_code", "dc_name",
+        headers = ["timestamp", "run_id", "site", "dc_code", "dc_name",
                    "server_ip", "stage_failed", "gateway_ip", "gateway_up"]
         with path.open("w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=headers)
@@ -374,10 +374,10 @@ def write_failures_csv(path: Path, rows: List[Dict]):
         w.writerows(rows)
 
 def write_map_status_csv(path: Path, rows: List[Dict]):
-    """Writes full store status rows for map consumption."""
+    """Writes full site status rows for map consumption."""
     path.parent.mkdir(parents=True, exist_ok=True)
     if not rows:
-        headers = ["timestamp","run_id","store","dc_code","dc_name","server_ip","gateway_ip","server_up","gateway_up","status","Latitude","Longitude","Address","City","State","ZIP"]
+        headers = ["timestamp","run_id","site","dc_code","dc_name","server_ip","gateway_ip","server_up","gateway_up","status","Latitude","Longitude","Address","City","State","ZIP"]
         with path.open("w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=headers)
             w.writeheader()
@@ -409,7 +409,7 @@ def write_txt_report(
         fw.write("===== Initial Ping Summary =====\n")
         fw.write(f"Timestamp: {run_ts}\n")
         fw.write(f"Input CSV: {csv_path}\n")
-        fw.write(f"Total Stores: {total}\n")
+        fw.write(f"Total sites: {total}\n")
         fw.write(f"Initial Responding: {initial_success}\n")
         fw.write(f"Initial Timeouts: {len(initial_failures)}\n\n")
 
@@ -421,22 +421,22 @@ def write_txt_report(
         grouped = group_failures_by_dc(final_failures, dc_map)
         for dc_name, items in grouped.items():
             fw.write(f"\n{dc_name} ({len(items)}):\n")
-            for store, ip in items:
-                fw.write(f"  {store}  {ip}\n")
+            for site, ip in items:
+                fw.write(f"  {site}  {ip}\n")
 
         if gw_online or gw_offline:
             fw.write("\n===== Gateway Check =====\n")
             fw.write(f"Gateways ONLINE (server down): {len(gw_online)}\n")
-            for store, srv_ip, gw_ip in gw_online:
-                fw.write(f"  {store}  server={srv_ip}  gateway={gw_ip}\n")
+            for site, srv_ip, gw_ip in gw_online:
+                fw.write(f"  {site}  server={srv_ip}  gateway={gw_ip}\n")
             fw.write(f"\nGateways OFFLINE (server down): {len(gw_offline)}\n")
-            for store, srv_ip, gw_ip in gw_offline:
-                fw.write(f"  {store}  server={srv_ip}  gateway={gw_ip}\n")
+            for site, srv_ip, gw_ip in gw_offline:
+                fw.write(f"  {site}  server={srv_ip}  gateway={gw_ip}\n")
 
 def _run_once(args):
     publish_dir = Path(args.publish_dir) if args.publish_dir else Path(args.output_dir)
 
-    csv_path = Path(args.stores_csv)
+    csv_path = Path(args.sites_csv)
     dc_map = load_dc_map(Path(args.dc_csv))
 
     rows = list(load_rows(csv_path))
@@ -445,7 +445,7 @@ def _run_once(args):
         print(f"No usable rows found in {csv_path}.")
         sys.exit(0)
 
-    store_to_gateway = {r["StoreNumber"]: (r.get("Gateway") or "").strip() for r in rows}
+    site_to_gateway = {r["siteNumber"]: (r.get("Gateway") or "").strip() for r in rows}
 
     base_out_dir = Path(args.output_dir)
     run_dt = datetime.now().astimezone()  # local tz
@@ -454,10 +454,10 @@ def _run_once(args):
     run_dir = base_out_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    targets = [(r["StoreNumber"], r["IPAddress"]) for r in rows]
+    targets = [(r["siteNumber"], r["IPAddress"]) for r in rows]
 
     if not args.quiet:
-        print(f"Scanning {total} stores (initial pass: 1 ping) ...")
+        print(f"Scanning {total} sites (initial pass: 1 ping) ...")
 
     initial_successes, initial_failures = parallel_ping(
         targets,
@@ -492,7 +492,7 @@ def _run_once(args):
             print(f"Gateway-checking {len(final_failures)} final failures ...")
         gw_online, gw_offline = check_gateways_for_failures(
             final_failures,
-            store_to_gateway=store_to_gateway,
+            site_to_gateway=site_to_gateway,
             timeout_ms=args.timeout_ms,
             max_workers=args.max_workers,
             progress_every=0 if args.quiet else GW_PROGRESS_EVERY
@@ -500,14 +500,14 @@ def _run_once(args):
 
     # Build failure details for outputs
     failures_detail = []
-    for store, ip in final_failures:
-        dc_code = first4_digits(store)
+    for site, ip in final_failures:
+        dc_code = first4_digits(site)
         dc_name = dc_map.get(dc_code, f"Unknown DC {dc_code}")
-        gw_ip = store_to_gateway.get(store, "") or derive_gateway_ip(ip)
+        gw_ip = site_to_gateway.get(site, "") or derive_gateway_ip(ip)
         failures_detail.append({
             "timestamp": run_ts,
             "run_id": run_id,
-            "store": store,
+            "site": site,
             "dc_code": dc_code,
             "dc_name": dc_name,
             "server_ip": ip,
@@ -517,28 +517,28 @@ def _run_once(args):
         })
     if args.gateway_check and (gw_online or gw_offline):
         gw_lookup = {}
-        for store, srv_ip, gw_ip in gw_online:
-            gw_lookup[(store, srv_ip)] = True
-        for store, srv_ip, gw_ip in gw_offline:
-            gw_lookup[(store, srv_ip)] = False
+        for site, srv_ip, gw_ip in gw_online:
+            gw_lookup[(site, srv_ip)] = True
+        for site, srv_ip, gw_ip in gw_offline:
+            gw_lookup[(site, srv_ip)] = False
         for r in failures_detail:
-            key = (r["store"], r["server_ip"])
+            key = (r["site"], r["server_ip"])
             if key in gw_lookup:
                 r["gateway_up"] = "true" if gw_lookup[key] else "false"
 
-    # Build full map status rows (green/yellow/red) for ALL stores
-    failure_map = {(d["store"], d["server_ip"]): d for d in failures_detail}
+    # Build full map status rows (green/yellow/red) for ALL sites
+    failure_map = {(d["site"], d["server_ip"]): d for d in failures_detail}
     map_status_rows = []
     for rec in rows:
-        store = rec.get("StoreNumber", "")
+        site = rec.get("siteNumber", "")
         ip = rec.get("IPAddress", "")
-        dc_code = first4_digits(store)
+        dc_code = first4_digits(site)
         dc_name = dc_map.get(dc_code, f"Unknown DC {dc_code}")
         gw_ip = (rec.get("Gateway") or "").strip() or derive_gateway_ip(ip)
         lat = rec.get("Latitude")
         lon = rec.get("Longitude")
 
-        key = (store, ip)
+        key = (site, ip)
         server_up = key not in failure_map
 
         gateway_up = None
@@ -563,7 +563,7 @@ def _run_once(args):
         map_status_rows.append({
             "timestamp": run_ts,
             "run_id": run_id,
-            "store": store,
+            "site": site,
             "dc_code": dc_code,
             "dc_name": dc_name,
             "server_ip": ip,
@@ -589,7 +589,7 @@ def _run_once(args):
         "timestamp": run_ts,
         "run_id": run_id,
         "input_csv": str(csv_path),
-        "total_stores": total,
+        "total_sites": total,
         "initial_responding": initial_success,
         "initial_timeouts": len(initial_failures),
         "recovered_after_retry": recovered_count,
@@ -604,7 +604,7 @@ def _run_once(args):
     failures_path = run_dir / f"failures_{run_id}.json"
     write_json(summary_path, summary)
     write_json(failures_path, failures_detail)
-    # Full map status feed (all stores)
+    # Full map status feed (all sites)
     write_json(run_dir / f"map_status_{run_id}.json", map_status_rows)
     write_map_status_csv(run_dir / f"map_status_{run_id}.csv", map_status_rows)
     if args.write_csv:
@@ -661,7 +661,7 @@ def _run_once(args):
     if not args.quiet:
         print("\n===== DONE =====")
         print(f"Run ID: {run_id}")
-        print(f"Total stores: {total}")
+        print(f"Total sites: {total}")
         print(f"Initial responding: {initial_success}")
         print(f"Recovered after retry: {recovered_count}")
         print(f"Final timeouts: {len(final_failures)}")
@@ -672,13 +672,13 @@ def _run_once(args):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stores_csv", nargs="?", default=DEFAULT_CSV,
-                    help="Stores CSV path (StoreNumber, IPAddress[, Gateway])")
+    ap.add_argument("sites_csv", nargs="?", default=DEFAULT_CSV,
+                    help="sites CSV path (siteNumber, IPAddress[, Gateway])")
     ap.add_argument("--dc-csv", default=DC_CSV, help="DC list CSV path (City, DC)")
     ap.add_argument("--timeout-ms", type=int, default=PING_TIMEOUT_MS)
     ap.add_argument("--max-workers", type=int, default=MAX_WORKERS)
     ap.add_argument("--retry-pings", type=int, default=RETRY_PINGS)
-    ap.add_argument("--gateway-check", action="store_true",
+    ap.add_argument("--gateway-check", action="site_true",
                     help="Ping the Gateway column IP (fallback to .1 only if blank)")
     ap.add_argument("--output-dir", default=str(DEFAULT_OUTPUTDIR),
                     help="Directory to write outputs")
@@ -686,16 +686,16 @@ def main():
                     help="Also write/overwrite live map feed files (map_status_latest.*) into this directory. If blank, uses --output-dir.")
     ap.add_argument("--run-id", default="",
                     help="Optional run id string; if blank, timestamp is used")
-    ap.add_argument("--write-txt", action="store_true",
+    ap.add_argument("--write-txt", action="site_true",
                     help="Also write legacy text report")
-    ap.add_argument("--write-csv", action="store_true",
+    ap.add_argument("--write-csv", action="site_true",
                     help="Also write failures CSV (Power BI friendly)")
-    ap.add_argument("--quiet", action="store_true", help="Less console output")
-    ap.add_argument("--zip-run", action="store_true",
+    ap.add_argument("--quiet", action="site_true", help="Less console output")
+    ap.add_argument("--zip-run", action="site_true",
                     help="Zip each run folder after writing outputs")
-    ap.add_argument("--remove-run-folder-after-zip", action="store_true",
+    ap.add_argument("--remove-run-folder-after-zip", action="site_true",
                     help="Delete the per-run folder once zip is created")
-    ap.add_argument("--loop", action="store_true",
+    ap.add_argument("--loop", action="site_true",
                     help="Run continuously in a loop (sleeping between runs)")
     ap.add_argument("--interval-seconds", type=int, default=100,
                     help="Loop sleep interval in seconds (default: 100 = 1 minute 40 seconds)")

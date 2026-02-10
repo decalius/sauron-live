@@ -2,7 +2,7 @@
   {
     "timestamp": "2026-02-09T12:00:00-05:00",
     "run_id": "demo-1",
-    "store": "SITE-0001",
+    "site": "SITE-0001",
     "dc_code": "ALP",
     "dc_name": "Alpha Hub",
     "server_ip": "198.51.100.10",
@@ -21,7 +21,7 @@
   {
     "timestamp": "2026-02-09T12:00:00-05:00",
     "run_id": "demo-1",
-    "store": "SITE-0002",
+    "site": "SITE-0002",
     "dc_code": "BRV",
     "dc_name": "Bravo Hub",
     "server_ip": "203.0.113.10",

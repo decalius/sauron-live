@@ -3,7 +3,7 @@
     <html>
       <head>
         <meta charset="UTF-8"/>
-        <title>Network Health Monitor - Live Store Status</title>
+        <title>Network Health Monitor - Live site Status</title>
 
         <!--Uber Font-->
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
@@ -17,7 +17,7 @@
 
         <!-— facebook open graph tags -->
         <meta property="og:url" content="http://github.com/your-username/sauron-scanner" />
-        <meta property="og:title" content="Network Health Monitor - Automated Store Connectivity Scanner" />
+        <meta property="og:title" content="Network Health Monitor - Automated site Connectivity Scanner" />
         <meta property="og:description" content="Real-time geospatial dashboard for monitoring network health across distributed locations. Parallel scanning, 3D visualization, and automated alerting." />
         <meta property="og:site_name" content="Sauron Scanner v2" />
         <meta property="og:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
@@ -45,7 +45,7 @@
 
         <style type="text/css">
           body {margin: 0; padding: 0; overflow: hidden;}
-          /* Overlay panel for offline stores grouped by status */
+          /* Overlay panel for offline sites grouped by status */
           #offline-panel {
             position: fixed;
             top: 12px;
@@ -68,13 +68,13 @@
           .status-yellow .offline-badge {background:#ffd600}
           .offline-item {font-size:12px; margin:2px 0}
           .offline-count {font-weight:700; margin-left:6px}
-          .offline-item[data-store] {
+          .offline-item[data-site] {
             cursor: pointer;
             padding: 3px 4px;
             border-radius: 3px;
             transition: background-color 0.15s ease;
           }
-          .offline-item[data-store]:hover {
+          .offline-item[data-site]:hover {
             background-color: rgba(255, 255, 255, 0.1);
           }
           /* Collapsible header */
@@ -170,10 +170,10 @@
         <!-- Reset View Button -->
         <button id="reset-view-btn" title="Reset map to North America overview">↑ Reset View</button>
 
-        <!-- Overlay: list chart showing offline stores grouped by status (collapsible) -->
+        <!-- Overlay: list chart showing offline sites grouped by status (collapsible) -->
         <div id="offline-panel" aria-live="polite" class="collapsed">
           <div class="panel-header" role="button" aria-expanded="false" tabindex="0">
-            <div class="panel-title">Offline Stores</div>
+            <div class="panel-title">Offline sites</div>
             <div class="panel-controls"><span class="arrow" aria-hidden="true"></span></div>
           </div>
           <div id="offline-contents" class="offline-content">
@@ -194,8 +194,8 @@
 
             // initialize state from localStorage
             try {
-              const stored = localStorage.getItem(key);
-              if (stored === 'false') panel.classList.remove('collapsed');
+              const sited = localStorage.getItem(key);
+              if (sited === 'false') panel.classList.remove('collapsed');
               else panel.classList.add('collapsed');
               setAria(panel.classList.contains('collapsed'));
             } catch(e) { /* ignore */ }
@@ -229,9 +229,9 @@
             btnReset.addEventListener('click', function(e) {
               e.preventDefault();
               // Dispatch Redux action to update map view
-              // This will be called after the store is available
-              if (window.__mapStore) {
-                window.__mapStore.dispatch(
+              // This will be called after the site is available
+              if (window.__mapsite) {
+                window.__mapsite.dispatch(
                   KeplerGl.updateMap(NA_VIEW)
                 );
               }
@@ -246,7 +246,7 @@
             alert(WARNING_MESSAGE);
           }
 
-          /** STORE **/
+          /** site **/
           const reducers = (function createReducers(redux, keplerGl) {
             return redux.combineReducers({
               // mount keplerGl reducer
@@ -269,16 +269,16 @@
             return redux.applyMiddleware(...middles);
           }(Redux, middleWares));
 
-          const store = (function createStore(redux, enhancers) {
+          const site = (function createsite(redux, enhancers) {
             const initialState = {};
 
-            return redux.createStore(
+            return redux.createsite(
               reducers,
               initialState,
               redux.compose(enhancers)
             );
           }(Redux, enhancers));
-          /** END STORE **/
+          /** END site **/
 
           /** COMPONENTS **/
           var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
@@ -349,7 +349,7 @@
           const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
             return react.createElement(
               reactRedux.Provider,
-              {store},
+              {site},
               react.createElement(KeplerElement, null)
             )
           }(React, ReactRedux, KeplerElement));
@@ -362,29 +362,29 @@
             root.render(app);
           }(React, ReactDOM, app));
         </script>
-        <!-- The next script will show how to interact directly with Kepler map store -->
+        <!-- The next script will show how to interact directly with Kepler map site -->
         <script>
           /**
            * Customize map.
-           * In the following section you can use the store object to dispatch Kepler.gl actions
+           * In the following section you can use the site object to dispatch Kepler.gl actions
            * to add new data and customize behavior
            */
-          (function customize(keplerGl, store) {
+          (function customize(keplerGl, site) {
             const DATASET_ID = "vx4wwy";
             const DATA_URL = "./map_status_latest.json";
             const POLL_MS = 10 * 60 * 1000; // 10 minutes
 
-            // Expose store globally for reset view button
-            window.__mapStore = store;
+            // Expose site globally for reset view button
+            window.__mapsite = site;
 
-const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id":"unt8pyo","type":"point","config":{"dataId":"vx4wwy","columnMode":"points","label":"store-coords","color":[98,206,173],"highlightColor":[252,242,26,255],"columns":{"lat":"Latitude","lng":"Longitude"},"isVisible":true,"visConfig":{"radius":10,"fixedRadius":false,"opacity":0.8,"outline":false,"thickness":2,"strokeColor":null,"colorRange":{"name":"Status","type":"custom","category":"Custom","colors":["#00c853","#ffd600","#d50000"]},"strokeColorRange":{"name":"Global Warming","type":"sequential","category":"Uber","colors":["#4C0035","#880030","#B72F15","#D6610A","#EF9100","#FFC300"]},"radiusRange":[8,36],"filled":true,"billboard":false,"allowHover":true,"showNeighborOnHover":false,"showHighlightColor":true},"hidden":false,"textLabel":[{"field":null,"color":[255,255,255],"size":18,"offset":[0,0],"anchor":"start","alignment":"center","outlineWidth":0,"outlineColor":[255,0,0,255],"background":false,"backgroundColor":[0,0,200,255]}]},"visualChannels":{"colorField":{"name":"status_code","type":"integer"},"colorScale":"ordinal","strokeColorField":null,"strokeColorScale":"quantile","sizeField":{"name":"size_code","type":"integer"},"sizeScale":"linear"}}],"effects":[],"interactionConfig":{"tooltip":{"fieldsToShow":{"vx4wwy":[{"name":"store","format":null},{"name":"server_ip","format":null},{"name":"gateway_ip","format":null},{"name":"status","format":null},{"name":"server_up","format":null},{"name":"gateway_up","format":null},{"name":"timestamp","format":null},{"name":"dc_name","format":null}]},"compareMode":false,"compareType":"absolute","enabled":true},"brush":{"size":0.5,"enabled":false},"geocoder":{"enabled":false},"coordinate":{"enabled":false}},"layerBlending":"normal","overlayBlending":"normal","splitMaps":[],"animationConfig":{"currentTime":null,"speed":1},"editor":{"features":[],"visible":true}},"mapState":{"bearing":24,"dragRotate":true,"latitude":42.87656887523501,"longitude":-116.3805689153473,"pitch":50,"zoom":3.644376141064472,"isSplit":false,"isViewportSynced":true,"isZoomLocked":false,"splitMapViewports":[]},"mapStyle":{"styleType":"dark-matter","topLayerGroups":{},"visibleLayerGroups":{"label":true,"road":true,"border":false,"building":true,"water":true,"land":true,"3d building":false},"threeDBuildingColor":[15.035172933000911,15.035172933000911,15.035172933000911],"backgroundColor":[0,0,0],"mapStyles":{}},"uiState":{"mapControls":{"mapLegend":{"active":false}}}}};
-  const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id":"unt8pyo","type":"point","config":{"dataId":"vx4wwy","columnMode":"points","label":"store-coords","color":[98,206,173],"highlightColor":[252,242,26,255],"columns":{"lat":"Latitude","lng":"Longitude"},"isVisible":true,"visConfig":{"radius":10,"fixedRadius":false,"opacity":0.8,"outline":false,"thickness":2,"strokeColor":null,"colorRange":{"name":"Status","type":"custom","category":"Custom","colors":["#00c853","#ffd600","#d50000"]},"strokeColorRange":{"name":"Global Warming","type":"sequential","category":"Uber","colors":["#4C0035","#880030","#B72F15","#D6610A","#EF9100","#FFC300"]},"radiusRange":[8,36],"filled":true,"billboard":false,"allowHover":true,"showNeighborOnHover":false,"showHighlightColor":true},"hidden":false,"textLabel":[{"field":null,"color":[255,255,255],"size":18,"offset":[0,0],"anchor":"start","alignment":"center","outlineWidth":0,"outlineColor":[255,0,0,255],"background":false,"backgroundColor":[0,0,200,255]}]},"visualChannels":{"colorField":{"name":"status_code","type":"integer"},"colorScale":"ordinal","strokeColorField":null,"strokeColorScale":"quantile","sizeField":{"name":"size_code","type":"integer"},"sizeScale":"linear"}}],"effects":[],"interactionConfig":{"tooltip":{"fieldsToShow":{"vx4wwy":[{"name":"store","format":null},{"name":"server_ip","format":null},{"name":"gateway_ip","format":null},{"name":"status","format":null},{"name":"server_up","format":null},{"name":"gateway_up","format":null},{"name":"timestamp","format":null},{"name":"dc_name","format":null}]},"compareMode":false,"compareType":"absolute","enabled":true},"brush":{"size":0.5,"enabled":false},"geocoder":{"enabled":false},"coordinate":{"enabled":false}},"layerBlending":"normal","overlayBlending":"normal","splitMaps":[],"animationConfig":{"currentTime":null,"speed":1},"editor":{"features":[],"visible":true}},"mapState":{"bearing":24,"dragRotate":true,"latitude":0,"longitude":0,"pitch":50,"zoom":3.644376141064472,"isSplit":false,"isViewportSynced":true,"isZoomLocked":false,"splitMapViewports":[]},"mapStyle":{"styleType":"dark-matter","topLayerGroups":{},"visibleLayerGroups":{"label":true,"road":true,"border":false,"building":true,"water":true,"land":true,"3d building":false},"threeDBuildingColor":[15.035172933000911,15.035172933000911,15.035172933000911],"backgroundColor":[0,0,0],"mapStyles":{}},"uiState":{"mapControls":{"mapLegend":{"active":false}}}}};
+const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id":"unt8pyo","type":"point","config":{"dataId":"vx4wwy","columnMode":"points","label":"site-coords","color":[98,206,173],"highlightColor":[252,242,26,255],"columns":{"lat":"Latitude","lng":"Longitude"},"isVisible":true,"visConfig":{"radius":10,"fixedRadius":false,"opacity":0.8,"outline":false,"thickness":2,"strokeColor":null,"colorRange":{"name":"Status","type":"custom","category":"Custom","colors":["#00c853","#ffd600","#d50000"]},"strokeColorRange":{"name":"Global Warming","type":"sequential","category":"Uber","colors":["#4C0035","#880030","#B72F15","#D6610A","#EF9100","#FFC300"]},"radiusRange":[8,36],"filled":true,"billboard":false,"allowHover":true,"showNeighborOnHover":false,"showHighlightColor":true},"hidden":false,"textLabel":[{"field":null,"color":[255,255,255],"size":18,"offset":[0,0],"anchor":"start","alignment":"center","outlineWidth":0,"outlineColor":[255,0,0,255],"background":false,"backgroundColor":[0,0,200,255]}]},"visualChannels":{"colorField":{"name":"status_code","type":"integer"},"colorScale":"ordinal","strokeColorField":null,"strokeColorScale":"quantile","sizeField":{"name":"size_code","type":"integer"},"sizeScale":"linear"}}],"effects":[],"interactionConfig":{"tooltip":{"fieldsToShow":{"vx4wwy":[{"name":"site","format":null},{"name":"server_ip","format":null},{"name":"gateway_ip","format":null},{"name":"status","format":null},{"name":"server_up","format":null},{"name":"gateway_up","format":null},{"name":"timestamp","format":null},{"name":"dc_name","format":null}]},"compareMode":false,"compareType":"absolute","enabled":true},"brush":{"size":0.5,"enabled":false},"geocoder":{"enabled":false},"coordinate":{"enabled":false}},"layerBlending":"normal","overlayBlending":"normal","splitMaps":[],"animationConfig":{"currentTime":null,"speed":1},"editor":{"features":[],"visible":true}},"mapState":{"bearing":24,"dragRotate":true,"latitude":42.87656887523501,"longitude":-116.3805689153473,"pitch":50,"zoom":3.644376141064472,"isSplit":false,"isViewportSynced":true,"isZoomLocked":false,"splitMapViewports":[]},"mapStyle":{"styleType":"dark-matter","topLayerGroups":{},"visibleLayerGroups":{"label":true,"road":true,"border":false,"building":true,"water":true,"land":true,"3d building":false},"threeDBuildingColor":[15.035172933000911,15.035172933000911,15.035172933000911],"backgroundColor":[0,0,0],"mapStyles":{}},"uiState":{"mapControls":{"mapLegend":{"active":false}}}}};
+  const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id":"unt8pyo","type":"point","config":{"dataId":"vx4wwy","columnMode":"points","label":"site-coords","color":[98,206,173],"highlightColor":[252,242,26,255],"columns":{"lat":"Latitude","lng":"Longitude"},"isVisible":true,"visConfig":{"radius":10,"fixedRadius":false,"opacity":0.8,"outline":false,"thickness":2,"strokeColor":null,"colorRange":{"name":"Status","type":"custom","category":"Custom","colors":["#00c853","#ffd600","#d50000"]},"strokeColorRange":{"name":"Global Warming","type":"sequential","category":"Uber","colors":["#4C0035","#880030","#B72F15","#D6610A","#EF9100","#FFC300"]},"radiusRange":[8,36],"filled":true,"billboard":false,"allowHover":true,"showNeighborOnHover":false,"showHighlightColor":true},"hidden":false,"textLabel":[{"field":null,"color":[255,255,255],"size":18,"offset":[0,0],"anchor":"start","alignment":"center","outlineWidth":0,"outlineColor":[255,0,0,255],"background":false,"backgroundColor":[0,0,200,255]}]},"visualChannels":{"colorField":{"name":"status_code","type":"integer"},"colorScale":"ordinal","strokeColorField":null,"strokeColorScale":"quantile","sizeField":{"name":"size_code","type":"integer"},"sizeScale":"linear"}}],"effects":[],"interactionConfig":{"tooltip":{"fieldsToShow":{"vx4wwy":[{"name":"site","format":null},{"name":"server_ip","format":null},{"name":"gateway_ip","format":null},{"name":"status","format":null},{"name":"server_up","format":null},{"name":"gateway_up","format":null},{"name":"timestamp","format":null},{"name":"dc_name","format":null}]},"compareMode":false,"compareType":"absolute","enabled":true},"brush":{"size":0.5,"enabled":false},"geocoder":{"enabled":false},"coordinate":{"enabled":false}},"layerBlending":"normal","overlayBlending":"normal","splitMaps":[],"animationConfig":{"currentTime":null,"speed":1},"editor":{"features":[],"visible":true}},"mapState":{"bearing":24,"dragRotate":true,"latitude":0,"longitude":0,"pitch":50,"zoom":3.644376141064472,"isSplit":false,"isViewportSynced":true,"isZoomLocked":false,"splitMapViewports":[]},"mapStyle":{"styleType":"dark-matter","topLayerGroups":{},"visibleLayerGroups":{"label":true,"road":true,"border":false,"building":true,"water":true,"land":true,"3d building":false},"threeDBuildingColor":[15.035172933000911,15.035172933000911,15.035172933000911],"backgroundColor":[0,0,0],"mapStyles":{}},"uiState":{"mapControls":{"mapLegend":{"active":false}}}}};
 
             // Load initial config (layers, basemap, etc.)
             const loadedConfig = keplerGl.KeplerGlSchema.load([], config).config;
 
             const FIELD_ORDER = [
-              "timestamp","run_id","store","dc_code","dc_name",
+              "timestamp","run_id","site","dc_code","dc_name",
               "server_ip","gateway_ip","server_up","gateway_up",
               "status","status_code","size_code","Latitude","Longitude"
             ];
@@ -392,7 +392,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
             const FIELD_TYPES = {
               timestamp: "string",
               run_id: "string",
-              store: "string",
+              site: "string",
               dc_code: "string",
               dc_name: "string",
               server_ip: "string",
@@ -447,11 +447,11 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
 
             async function refreshData() {
               try {
-                const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
+                const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-site" });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const rows = await res.json();
 
-                store.dispatch(
+                site.dispatch(
                   keplerGl.addDataToMap({
                     datasets: rowsToDataset(rows),
                     config: loadedConfig,
@@ -515,7 +515,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                 
                 if (el) el.textContent = `Last update: ${humanReadable} (${numericStamp})`;
 
-                // Update offline panel: group offline stores into Red (2) and Yellow (1)
+                // Update offline panel: group offline sites into Red (2) and Yellow (1)
                 try {
                   const panel = document.getElementById('offline-contents');
                   if (panel) {
@@ -527,11 +527,11 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                     console.log('DEBUG offline array:', offline);
                     console.log('DEBUG row samples (first 5):', rows ? rows.slice(0, 5) : []);
 
-                    // Store coordinates for map navigation
-                    window.__storeCoords = {};
+                    // site coordinates for map navigation
+                    window.__siteCoords = {};
                     offline.forEach(r => {
-                      if (r.store) {
-                        window.__storeCoords[r.store] = {
+                      if (r.site) {
+                        window.__siteCoords[r.site] = {
                           lat: Number(r.Latitude),
                           lng: Number(r.Longitude)
                         };
@@ -541,19 +541,19 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                     const groups = { red: [], yellow: [] };
                     offline.forEach(r => {
                       const sc = Number(r.status_code);
-                      const store = (r.store && r.store !== 'null') ? r.store : null;
+                      const site = (r.site && r.site !== 'null') ? r.site : null;
                       const dc = r.dc_name || 'Unknown';
                       if (sc === 2) {
-                        groups.red.push({ store, dc });
+                        groups.red.push({ site, dc });
                       }
                       else if (sc === 1) {
-                        groups.yellow.push({ store, dc });
+                        groups.yellow.push({ site, dc });
                       }
                     });
 
-                    // Sort each group numerically by store number
-                    groups.red.sort((a, b) => Number(a.store) - Number(b.store));
-                    groups.yellow.sort((a, b) => Number(a.store) - Number(b.store));
+                    // Sort each group numerically by site number
+                    groups.red.sort((a, b) => Number(a.site) - Number(b.site));
+                    groups.yellow.sort((a, b) => Number(a.site) - Number(b.site));
 
                     function escapeHtml(s) {
                       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -565,8 +565,8 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                         const itemHtml = items.map(function(it) {
                           try {
                             const dc = (it && it.dc) ? it.dc : 'Unknown';
-                            const display = (it && it.store) ? `${escapeHtml(dc)} - ${escapeHtml(it.store)}` : escapeHtml(dc);
-                            const attrs = (it && it.store) ? `data-store="${escapeHtml(it.store)}" style="cursor:pointer;" title="Click to center map"` : '';
+                            const display = (it && it.site) ? `${escapeHtml(dc)} - ${escapeHtml(it.site)}` : escapeHtml(dc);
+                            const attrs = (it && it.site) ? `data-site="${escapeHtml(it.site)}" style="cursor:pointer;" title="Click to center map"` : '';
                             return `<div class="offline-item" ${attrs}>${display}</div>`;
                           } catch (e) {
                             console.error('offline item render error', e, it);
@@ -595,20 +595,20 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                     console.log('DEBUG redHtml:', redHtml.substring(0, 200));
                     console.log('DEBUG yellowHtml:', yellowHtml.substring(0, 200));
                     console.log('DEBUG final html:', html.substring(0, 500));
-                    if (!offline.length) html = '<div style="font-size:12px; opacity:0.8">No offline stores</div>';
+                    if (!offline.length) html = '<div style="font-size:12px; opacity:0.8">No offline sites</div>';
                     panel.innerHTML = html;
 
-                    // Add click handlers to store items
+                    // Add click handlers to site items
                     setTimeout(() => {
-                      const items = panel.querySelectorAll('.offline-item[data-store]');
+                      const items = panel.querySelectorAll('.offline-item[data-site]');
                       items.forEach(el => {
                         el.addEventListener('click', function(e) {
                           e.stopPropagation();
-                          const storeNum = this.getAttribute('data-store');
-                          const coords = window.__storeCoords[storeNum];
+                          const siteNum = this.getAttribute('data-site');
+                          const coords = window.__siteCoords[siteNum];
                           if (coords) {
                             // Update Kepler.gl map viewport
-                            store.dispatch(
+                            site.dispatch(
                               keplerGl.updateMap({
                                 latitude: coords.lat,
                                 longitude: coords.lng,
@@ -633,7 +633,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
             // Initial load + 10-minute polling
             window.setTimeout(() => refreshData(), 500);
             window.setInterval(() => refreshData(), POLL_MS);
-          }(KeplerGl, store))
+          }(KeplerGl, site))
         </script>
       </body>
     </html>
