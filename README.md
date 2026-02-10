@@ -7,9 +7,9 @@ A lightweight, presentation-ready sample of the **Sauron** network scanner, desi
 This repo contains:
 - **index.html** — Interactive geospatial dashboard showing store network health
 - **sample_data/map_status_sample.json** — Sample scan results (green ✓, yellow ⚠, red ✗ statuses)
-- **stores.csv** — 10 sample stores for demo purposes
-- **DC_LIST.csv** — Data center mappings
 - **sauron.py** — Scanner tool (simplified demo version showing CLI interface)
+
+No proprietary store data is included. Provide your own `stores.csv` and optional `DC_LIST.csv`.
 
 ## Quick Start (Demo Mode)
 
@@ -36,7 +36,7 @@ This repo contains:
 
 ### Run the Scanner (Locally)
 
-To scan your own stores with sample data:
+To scan your own stores with your data:
 
 1. **Ensure Python 3.10+ is installed:**
    ```bash
@@ -54,6 +54,14 @@ To scan your own stores with sample data:
    ```
 
 4. **Output files appear in `./logs/map_status_latest.json`**
+
+### Required CSV Headers
+`stores.csv` must include:
+- `StoreNumber`
+- `IPAddress`
+
+Optional (recommended):
+- `Gateway`, `Latitude`, `Longitude`, `Address`, `City`, `State`, `ZIP`
 
 ## Customizing the Demo
 
@@ -133,3 +141,24 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
 ---
 
 **Version:** 3.0 | **Last Updated:** February 2026 | **Status:** Demo Ready
+
+## CLI Flags
+```
+stores_csv                 Path to stores CSV (default: stores.csv)
+--dc-csv CSV_FILE          Path to DC list CSV (default: DC_LIST.csv)
+--gateway-check            Enable gateway connectivity checks
+--retry-pings N            Number of retries per failure (default: 3)
+--timeout-ms MS            Ping timeout in milliseconds (default: 1000)
+--max-workers N            Number of parallel ping threads (default: 200)
+--output-dir PATH          Directory for logs/results (default: ./logs)
+--publish-dir PATH         Where to publish live feed files (default: output dir)
+--run-id ID                Custom run identifier (default: timestamp)
+--write-txt                Export failure details as text report
+--write-csv                Export failure details as CSV
+--quiet                    Reduce console output
+--zip-run                  Compress the run folder when complete
+--remove-run-folder-after-zip  Delete run folder after zip
+--loop                     Run continuously
+--interval-seconds N       Loop sleep interval in seconds (default: 100)
+--help                     Show all options
+```
