@@ -31,12 +31,12 @@ Provide your own `sites.csv` and optional `DC_LIST.csv`.
 
 3. **You should see:**
    - A geospatial map of the US (Maplibre GL)
-   - Color-coded store markers:
+   - Color-coded site markers:
      - **Green** = online ✓
      - **Yellow** = server down, gateway up (⚠ network issue)
      - **Red** = fully offline ✗
-   - A left-hand panel listing failed stores grouped by status
-   - Store details on click (address, last ping time, etc.)
+   - A left-hand panel listing failed sites grouped by status
+   - Site details on click (address, last ping time, etc.)
 
 ## Run the Scanner (Locally)
 
@@ -100,7 +100,7 @@ cp logs/map_status_latest.json sample_data/map_status_sample.json
 Edit `index.html` to adjust:
 - **Color scheme** — change RGB values for green/yellow/red markers
 - **Map center** — default view location (line ~450: `setCenter()`)
-- **Popup text** — store information display format
+- **Popup text** — site information display format
 - **Panel layout** — left-hand offline list appearance
 
 ### Sample Data Structure
@@ -112,7 +112,7 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
   {
       "timestamp": "2026-02-09T12:00:00-05:00",
       "run_id": "demo-1",
-      "store": "SITE-0001",
+      "site": "SITE-0001",
       "dc_code": "NE1",
       "dc_name": "North-East Warehouse",
       "server_ip": "198.51.100.10",
@@ -132,7 +132,7 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
 - **Pre-scan before the meeting:** Run `python sauron.py sites.csv --gateway-check` to generate fresh data (5-10 minutes for typical network)
 - **Use `--max-workers 500` to speed up large scans** (completes sooner)
 - **Export the map:** Use browser's screenshot or developer tools to capture dashboard for slides
-- **Show the offline panel:** Click a failed store to highlight it on the map — demonstrates geo-centric triage
+- **Show the offline panel:** Click a failed site to highlight it on the map — demonstrates geo-centric triage
 - **Highlight the yellow group:** Shows how the tool distinguishes server failures (red) from network problems (yellow)
 
 ## Key Points
@@ -161,7 +161,7 @@ Linux/macOS:
 
 ## CLI Flags
 ```
-stores_csv                 Path to sites CSV (default: sites.csv)
+sites_csv                 Path to sites CSV (default: sites.csv)
 --dc-csv CSV_FILE          Path to DC list CSV (default: DC_LIST.csv)
 --gateway-check            Enable gateway connectivity checks
 --retry-pings N            Number of retries per failure (default: 3)
