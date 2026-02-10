@@ -1,5 +1,23 @@
 ## Sauron 
 
+## Visual Demo
+
+See Sauron in action:
+
+### Dashboard Overview
+![Dashboard Overview](assets/dashboard-overview.png)
+*Interactive geospatial map showing color-coded site health status*
+
+### Offline Sites Panel
+![Offline Panel](assets/offline-panel.png)
+*Real-time failure list grouped by status (server down vs network issue)*
+
+### Live Demo
+![Demo Animation](assets/demo.gif)
+*Interactive demonstration: clicking sites, viewing details, and status monitoring*
+
+---
+
 ## What You're Looking At
 
 This repo contains:
@@ -179,3 +197,25 @@ sites_csv                 Path to sites CSV (default: sites.csv)
 --interval-seconds N       Loop sleep interval in seconds (default: 100)
 --help                     Show all options
 ```
+
+## Contributing Images/Media
+
+To add or update screenshots and demo animations:
+
+1. **Capture your screenshots/GIF** showing Sauron in action:
+   - Take high-quality screenshots (1920x1080 recommended)
+   - Record a GIF demo (1280x720, 10-30 seconds, under 5MB)
+
+2. **Name your files appropriately:**
+   - `dashboard-overview.png` - Full dashboard view
+   - `offline-panel.png` - Offline sites panel closeup
+   - `demo.gif` - Interactive demonstration
+
+3. **Place files in the `assets/` directory**
+
+4. **Optimize file sizes:**
+   - Use PNG for screenshots (compress if needed)
+   - Use GIF optimizers for animations (ezgif.com, gifsicle, etc.)
+   - Keep total size reasonable for GitHub (<5MB per file)
+
+See `assets/README.md` for detailed specifications and guidelines.
