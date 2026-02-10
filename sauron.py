@@ -10,7 +10,7 @@ Behavior:
 - Initial pass: 1 ping per host (parallel)
 - Retry pass:   N pings (default 3) for initial failures (parallel)
 - Optional gateway check (uses "Gateway" column; falls back to .1 if blank)
-- Writes (per-run folder under C:\DESA\scanner\logs\<run_id>\):
+- Writes (per-run folder under ./logs/<run_id>):
   - summary_<run_id>.json
   - failures_<run_id>.json
   - optional failures_<run_id>.csv
@@ -28,9 +28,15 @@ NEW (Live Map Feed):
     red    = server_down + gateway_down (or unknown)
 
 Usage examples:
-  python sauron.py
-  python sauron.py C:\DESA\scanner\stores.csv --gateway-check --write-txt --write-csv
-  python sauron.py --output-dir C:\DESA\scanner\logs --run-id latest --zip-run
+    # Windows
+    python sauron.py
+    python sauron.py path\to\stores.csv --gateway-check --write-txt --write-csv
+    python sauron.py --output-dir path\to\logs --run-id latest --zip-run
+
+    # Linux/macOS
+    python sauron.py
+    python sauron.py path/to/stores.csv --gateway-check --write-txt --write-csv
+    python sauron.py --output-dir path/to/logs --run-id latest --zip-run
 
 Live map publishing (recommended when serving current_map_of_sites.html):
   python sauron.py .\stores.csv --gateway-check --output-dir .\logs --publish-dir .
@@ -55,8 +61,8 @@ from collections import defaultdict
 # Configuration Defaults (edit these for your environment)
 # =======================
 # NOTE: These are only defaults. CLI flags always win.
-# Your Fedora test folder:
-BASE_DIR = Path(os.environ.get("SAURON_BASE_DIR", "C:\\DESA\\scannerv2"))
+# Default to current working directory unless SAURON_BASE_DIR is set.
+BASE_DIR = Path(os.environ.get("SAURON_BASE_DIR", "."))
 
 STORES_CSV_DEFAULT = BASE_DIR / "stores.csv"
 DC_CSV_DEFAULT = BASE_DIR / "DC_LIST.csv"
