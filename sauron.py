@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-scannerv2_pbi.py
-
 Parallel-pings all stores from the input CSV and produces machine-readable outputs
 for dashboards.
 
