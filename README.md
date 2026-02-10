@@ -9,7 +9,7 @@ This repo contains:
 - **sample_data/map_status_sample.json** — Sample scan results (green ✓, yellow ⚠, red ✗ statuses)
 - **sauron.py** — Scanner tool (simplified demo version showing CLI interface)
 
-No proprietary store data is included. Provide your own `stores.csv` and optional `DC_LIST.csv`.
+No proprietary store data is included. Provide your own `sites.csv` and optional `DC_LIST.csv`.
 
 ## Quick Start (Demo Mode)
 
@@ -52,25 +52,25 @@ To scan your own stores with your data:
 2. **Run the scanner:**
    ```bash
    # Windows
-   python sauron.py stores.csv
+   python sauron.py sites.csv
 
    # Linux/macOS
-   python sauron.py stores.csv
+   python sauron.py sites.csv
    ```
 
 3. **Or with gateway diagnostics:**
    ```bash
    # Windows
-   python sauron.py stores.csv --gateway-check
+   python sauron.py sites.csv --gateway-check
 
    # Linux/macOS
-   python sauron.py stores.csv --gateway-check
+   python sauron.py sites.csv --gateway-check
    ```
 
 4. **Output files appear in `./logs/map_status_latest.json`**
 
 ### Required CSV Headers
-`stores.csv` must include:
+`sites.csv` must include:
 - `StoreNumber`
 - `IPAddress`
 
@@ -85,7 +85,7 @@ Replace `sample_data/map_status_sample.json` with your own scan results:
 
 ```bash
 # Run a real scan in your environment
-python sauron.py your_stores.csv --gateway-check --output-dir ./logs
+python sauron.py your_sites.csv --gateway-check --output-dir ./logs
 
 # Copy the latest feed to the sample directory
 # Windows
@@ -133,7 +133,7 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
 
 ## Presentation Tips
 
-- **Pre-scan before the meeting:** Run `python sauron.py stores.csv --gateway-check` to generate fresh data (5-10 minutes for typical network)
+- **Pre-scan before the meeting:** Run `python sauron.py sites.csv --gateway-check` to generate fresh data (5-10 minutes for typical network)
 - **Use `--max-workers 500` to speed up large scans** (completes sooner)
 - **Export the map:** Use browser's screenshot or developer tools to capture dashboard for slides
 - **Show the offline panel:** Click a failed store to highlight it on the map — demonstrates geo-centric triage
@@ -175,7 +175,7 @@ Linux/macOS:
 
 ## CLI Flags
 ```
-stores_csv                 Path to stores CSV (default: stores.csv)
+stores_csv                 Path to sites CSV (default: sites.csv)
 --dc-csv CSV_FILE          Path to DC list CSV (default: DC_LIST.csv)
 --gateway-check            Enable gateway connectivity checks
 --retry-pings N            Number of retries per failure (default: 3)

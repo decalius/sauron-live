@@ -28,16 +28,16 @@ NEW (Live Map Feed):
 Usage examples:
     # Windows
     python sauron.py
-    python sauron.py path\to\stores.csv --gateway-check --write-txt --write-csv
+    python sauron.py path\to\sites.csv --gateway-check --write-txt --write-csv
     python sauron.py --output-dir path\to\logs --run-id latest --zip-run
 
     # Linux/macOS
     python sauron.py
-    python sauron.py path/to/stores.csv --gateway-check --write-txt --write-csv
+    python sauron.py path/to/sites.csv --gateway-check --write-txt --write-csv
     python sauron.py --output-dir path/to/logs --run-id latest --zip-run
 
 Live map publishing (recommended when serving current_map_of_sites.html):
-  python sauron.py .\stores.csv --gateway-check --output-dir .\logs --publish-dir .
+    python sauron.py .\sites.csv --gateway-check --output-dir .\logs --publish-dir .
 """
 
 import argparse
@@ -62,7 +62,7 @@ from collections import defaultdict
 # Default to current working directory unless SAURON_BASE_DIR is set.
 BASE_DIR = Path(os.environ.get("SAURON_BASE_DIR", "."))
 
-STORES_CSV_DEFAULT = BASE_DIR / "stores.csv"
+STORES_CSV_DEFAULT = BASE_DIR / "sites.csv"
 DC_CSV_DEFAULT = BASE_DIR / "DC_LIST.csv"
 
 # Logs (per-run folders created under here)
