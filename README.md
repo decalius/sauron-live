@@ -112,21 +112,21 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
 ```json
 [
   {
-    "timestamp": "2026-02-08T14:30:45.123456-05:00",
-    "run_id": "20260208_143045",
-    "store": "1001002",
-    "dc_code": "1001",
-    "dc_name": "Columbus",
-    "server_ip": "10.115.191.10",
-    "gateway_ip": "10.115.191.1",
+      "timestamp": "2026-02-09T12:00:00-05:00",
+      "run_id": "demo-1",
+      "store": "SITE-0001",
+      "dc_code": "ALP",
+      "dc_name": "Alpha Hub",
+      "server_ip": "10.0.10.10",
+      "gateway_ip": "10.0.10.1",
     "server_up": true,
     "gateway_up": true,
     "status": "green",
     "status_code": 0,
-    "Latitude": 40.088939,
-    "Longitude": -83.061863,
-    "City": "Columbus",
-    "State": "OH"
+      "Latitude": 37.7749,
+      "Longitude": -122.4194,
+      "City": "Example City",
+      "State": "CA"
   }
 ]
 ```
