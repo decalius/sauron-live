@@ -213,9 +213,24 @@ To add or update screenshots and demo animations:
 
 3. **Place files in the `assets/` directory**
 
-4. **Optimize file sizes:**
+4. **Add and commit to git:**
+   ```bash
+   # Linux/macOS
+   git add assets/*.png assets/*.gif
+   git commit -m "Add dashboard screenshots and demo"
+   git push
+   
+   # Windows PowerShell
+   git add assets\*.png assets\*.gif
+   git commit -m "Add dashboard screenshots and demo"
+   git push
+   ```
+
+5. **Optimize file sizes:**
    - Use PNG for screenshots (compress if needed)
    - Use GIF optimizers for animations (ezgif.com, gifsicle, etc.)
    - Keep total size reasonable for GitHub (<5MB per file)
+
+> **💡 Troubleshooting:** If you get "fatal: not a git repository", see `assets/TROUBLESHOOTING.md`
 
 See `assets/README.md` for detailed specifications and guidelines.

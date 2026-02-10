@@ -2,6 +2,8 @@
 
 This guide helps you capture professional screenshots and GIFs for the Sauron documentation.
 
+> **📝 Having trouble pushing your images?** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues like "fatal: not a git repository".
+
 ## Quick Setup for Capturing
 
 ### Step 1: Start the Dashboard
@@ -95,11 +97,22 @@ After capturing, verify you have:
 
 ## Commit Your Images
 
+### Linux/macOS:
 ```bash
 git add assets/
 git commit -m "Add screenshots and demo GIF"
 git push
 ```
+
+### Windows (PowerShell):
+```powershell
+git add assets\
+git commit -m "Add screenshots and demo GIF"
+git push
+```
+
+> **⚠️ Getting "fatal: not a git repository"?** You're not in the git repository directory.  
+> See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for the complete fix.
 
 The README.md already references these files, so they'll appear automatically once committed!
 

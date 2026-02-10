@@ -2,6 +2,12 @@
 
 This directory contains visual media for the Sauron project documentation.
 
+> **📁 Files in this directory:**
+> - `README.md` - This file (specifications)
+> - `CAPTURE_GUIDE.md` - How to capture images ([view guide](CAPTURE_GUIDE.md))
+> - `TROUBLESHOOTING.md` - Common issues & fixes ([view troubleshooting](TROUBLESHOOTING.md))
+> - Your images go here: `*.png`, `*.gif`
+
 ## Current Assets
 
 ### Screenshots
