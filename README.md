@@ -117,14 +117,14 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
       "store": "SITE-0001",
       "dc_code": "ALP",
       "dc_name": "Alpha Hub",
-      "server_ip": "10.0.10.10",
-      "gateway_ip": "10.0.10.1",
+      "server_ip": "198.51.100.10",
+      "gateway_ip": "198.51.100.1",
     "server_up": true,
     "gateway_up": true,
     "status": "green",
     "status_code": 0,
-      "Latitude": 37.7749,
-      "Longitude": -122.4194,
+      "Latitude": 0.0,
+      "Longitude": 0.0,
       "City": "Example City",
       "State": "CA"
   }
