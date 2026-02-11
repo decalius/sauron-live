@@ -1,5 +1,34 @@
 ## Sauron 
 
+## Dashboard Examples
+
+<p>
+   <strong>Outage view (local/regional disruption)</strong><br/>
+   Demonstrates what a localized outage can look like across a cluster (e.g., natural disaster or local ISP interruption).
+</p>
+
+<p>
+   <img src="assets/Sauron-Outage.png" alt="Sauron dashboard showing a localized outage across a cluster" width="1000" />
+</p>
+
+<p>
+   <strong>Real scan (live environment)</strong><br/>
+   Shows the tool scanning ~6,000 sites in real time.
+</p>
+
+<p>
+   <img src="assets/Sauron-Real-Scan.png" alt="Sauron dashboard performing a real-time scan across thousands of sites" width="1000" />
+</p>
+
+<p>
+   <strong>Reset view (ease-of-use)</strong><br/>
+   Quick way to zoom the map all the way back out.
+</p>
+
+<p>
+   <img src="assets/Sauron-Reset-View.gif" alt="Reset view feature zooming the map back out" width="1000" />
+</p>
+
 ## What You're Looking At
 
 This repo contains:
