@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Parallel-pings all sites from the input CSV and produces machine-readable outputs
+Parallel pings all sites from the input CSV and produces machine readable outputs
 for dashboards.
 
 Behavior:
 - Initial pass: 1 ping per host (parallel)
 - Retry pass:   N pings (default 3) for initial failures (parallel)
 - Optional gateway check (uses "Gateway" column; falls back to .1 if blank)
-- Writes (per-run folder under ./logs/<run_id>):
+- Writes (per run folder under ./logs/<run_id>):
   - summary_<run_id>.json
   - failures_<run_id>.json
   - optional failures_<run_id>.csv
-  - optional <run_id>_ping_report_v2.txt
+  - optional <run_id>_ping_report.txt
 - Also updates "latest" files in the base logs folder for convenience.
 
 NEW (Live Map Feed):
@@ -402,7 +402,7 @@ def write_txt_report(
     run_ts: str,
 ):
     """
-    Writes a human-friendly text report (legacy format) to path.
+    Writes a human friendly text report (legacy format) to path.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as fw:
@@ -448,7 +448,7 @@ def _run_once(args):
     site_to_gateway = {r["siteNumber"]: (r.get("Gateway") or "").strip() for r in rows}
 
     base_out_dir = Path(args.output_dir)
-    run_dt = datetime.now().astimezone()  # local tz
+    run_dt = datetime.now().astimezone()  # local timezone
     run_ts = run_dt.isoformat()
     run_id = (args.run_id or run_dt.strftime("%Y%m%d_%H%M%S")).strip()
     run_dir = base_out_dir / run_id
@@ -581,7 +581,7 @@ def _run_once(args):
         })
 
     # Capture timestamp NOW, when the scan is complete (not at the start)
-    run_dt_end = datetime.now().astimezone()  # local tz
+    run_dt_end = datetime.now().astimezone()  # local timezone
     run_ts = run_dt_end.isoformat(timespec="seconds")
 
     # Summary object
