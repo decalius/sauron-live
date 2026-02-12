@@ -524,9 +524,6 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                       const sc = Number(r.status_code);
                       return sc === 1 || sc === 2;
                     });
-                    
-                    console.log('DEBUG offline array:', offline);
-                    console.log('DEBUG row samples (first 5):', rows ? rows.slice(0, 5) : []);
 
                     // site coordinates for map navigation
                     window.__siteCoords = {};
@@ -582,20 +579,10 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                     }
 
                     let html = '';
-                    console.log('DEBUG groups:', groups);
-                    console.log('DEBUG offline count:', offline.length);
-                    console.log('DEBUG red count:', groups.red.length, groups.red);
-                    console.log('DEBUG yellow count:', groups.yellow.length, groups.yellow);
                     const redHtml = renderGroup('Server Down', 'status-red', groups.red);
                     const yellowHtml = renderGroup('Gateway Up', 'status-yellow', groups.yellow);
                     html += redHtml;
                     html += yellowHtml;
-                    // DEBUG: Show group counts even if empty
-                    html += `<div style="font-size:10px; opacity:0.6; margin-top:8px; border-top:1px solid rgba(255,255,255,0.1); padding-top:4px">Debug: red=${groups.red.length} yellow=${groups.yellow.length} total_offline=${offline.length}</div>`;
-                    console.log('DEBUG html length:', html.length);
-                    console.log('DEBUG redHtml:', redHtml.substring(0, 200));
-                    console.log('DEBUG yellowHtml:', yellowHtml.substring(0, 200));
-                    console.log('DEBUG final html:', html.substring(0, 500));
                     if (!offline.length) html = '<div style="font-size:12px; opacity:0.8">No offline sites</div>';
                     panel.innerHTML = html;
 
