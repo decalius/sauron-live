@@ -1,0 +1,609 @@
+
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8"/>
+        <title>Sauron - Site Status</title>
+
+        <!--Uber Font-->
+        <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
+
+        <!--Kepler css-->
+        <link href="https://unpkg.com/kepler.gl@3.2.5/umd/keplergl.min.css" rel="stylesheet">
+
+        <!--MapBox css-->
+        <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
+        <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
+
+        <!-— facebook open graph tags -->
+        <meta property="og:url" content="http://github.com/decalius/sauron-live" />
+        <meta property="og:title" content="Sauron - Site Status" />
+        <meta property="og:description" content="Real time geospatial dashboard for monitoring network health across distributed locations. Parallel scanning, 3D visualization, and automated alerting." />
+        <meta property="og:site_name" content="Sauron" />
+        <meta property="og:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="800" />
+        <meta property="og:image:height" content="800" />
+
+        <!-— twitter card tags -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@openjsf">
+        <meta name="twitter:creator" content="@openjsf">
+        <meta name="twitter:title" content="WebGL powered Geospatial Data Visualization Tool">
+        <meta name="twitter:description" content="Kepler.gl is a powerful web-based geospatial data analysis tool. Built on a high performance rendering engine and designed for large data sets.">
+        <meta name="twitter:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
+
+        <!-- Load React/Redux -->
+        <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
+        <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
+        <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
+
+        <!-- Load Kepler.gl -->
+        <script src="https://unpkg.com/kepler.gl@3.2.5/umd/keplergl.min.js" crossorigin></script>
+
+        <style type="text/css">
+          body {margin: 0; padding: 0; overflow: hidden;}
+          /* Overlay panel for offline sites grouped by status */
+          #offline-panel {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 10001;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            max-height: 70vh;
+            overflow: auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            min-width: 220px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+          }
+          #offline-panel h4 {margin: 0 0 8px 0; font-size: 13px}
+          .offline-group {margin-bottom: 8px}
+          .offline-badge {display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:8px; vertical-align:middle}
+          .status-red .offline-badge {background:#d50000}
+          .status-yellow .offline-badge {background:#ffd600}
+          .offline-item {font-size:12px; margin:2px 0}
+          .offline-count {font-weight:700; margin-left:6px}
+          .offline-item[data-site] {
+            cursor: pointer;
+            padding: 3px 4px;
+            border-radius: 3px;
+            transition: background-color 0.15s ease;
+          }
+          .offline-item[data-site]:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+          }
+          /* Collapsible header */
+          #offline-panel .panel-header {display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:8px}
+          #offline-panel .panel-title {font-size:13px; font-weight:600}
+          .arrow {display:inline-block; width:12px; height:12px; margin-left:8px; transition: transform .18s ease; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #fff; opacity:0.95}
+          /* collapsed state: hide content and rotate arrow */
+          #offline-panel.collapsed .arrow {transform: rotate(-90deg);}
+          #offline-panel .offline-content {overflow-y: auto; transition: max-height .22s ease, padding .18s ease; max-height:600px; padding-right: 4px;}
+          #offline-panel.collapsed .offline-content {max-height:0; padding-top:0; padding-bottom:0}
+          /* Reset View Button */
+          #reset-view-btn {
+            position: fixed;
+            bottom: 12px;
+            left: 12px;
+            z-index: 10001;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            user-select: none;
+          }
+          #reset-view-btn:hover {
+            background: rgba(0,0,0,0.8);
+            border-color: rgba(255,255,255,0.4);
+          }
+          #reset-view-btn:active {
+            transform: scale(0.98);
+          }
+          /* Timestamp display at top */
+          #timestamp-display {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, monospace;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+          }
+        </style>
+
+        <!--MapBox token-->
+        <script>
+          /**
+           * Provide your MapBox Token
+           **/
+          // Do not commit real tokens. Set this to your own token locally.
+          const MAPBOX_TOKEN = 'PROVIDE_MAPBOX_TOKEN';
+          const WARNING_MESSAGE = 'Please provide a Mapbox token to use Kepler.gl. Edit this file and set MAPBOX_TOKEN.';
+        </script>
+      </head>
+      <body>
+        <!-- We will put our React component inside this div. -->
+        <div id="app">
+          <!-- Kepler.gl map will be placed here-->
+        </div>
+        <!-- Timestamp Display -->
+        <div id="timestamp-display">Time of event: Loading...</div>
+
+        <!-- Reset View Button -->
+        <button id="reset-view-btn" title="Reset map to North America overview">↑ Reset View</button>
+
+        <!-- Overlay: list chart showing offline sites grouped by status (collapsible) -->
+        <div id="offline-panel" aria-live="polite" class="collapsed">
+          <div class="panel-header" role="button" aria-expanded="false" tabindex="0">
+            <div class="panel-title">Offline sites</div>
+            <div class="panel-controls"><span class="arrow" aria-hidden="true"></span></div>
+          </div>
+          <div id="offline-contents" class="offline-content">
+            <div style="font-size:12px; opacity:0.8">Loading...</div>
+          </div>
+        </div>
+        <script>
+          (function(){
+            const panel = document.getElementById('offline-panel');
+            if (!panel) return;
+            const header = panel.querySelector('.panel-header');
+            const contents = panel.querySelector('.offline-content');
+            const key = 'offlinePanelCollapsed_v1';
+
+            function setAria(collapsed){
+              header.setAttribute('aria-expanded', String(!collapsed));
+            }
+
+            // initialize state from localStorage
+            try {
+              const sited = localStorage.getItem(key);
+              if (sited === 'false') panel.classList.remove('collapsed');
+              else panel.classList.add('collapsed');
+              setAria(panel.classList.contains('collapsed'));
+            } catch(e) { /* ignore */ }
+
+            function toggle(e){
+              // allow keyboard activation
+              if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+              const nowCollapsed = panel.classList.toggle('collapsed');
+              setAria(nowCollapsed);
+              try { localStorage.setItem(key, String(!nowCollapsed)); } catch(e){}
+            }
+
+            header.addEventListener('click', toggle);
+            header.addEventListener('keydown', toggle);
+          })();
+
+          // Reset View Button Handler
+          (function(){
+            const btnReset = document.getElementById('reset-view-btn');
+            if (!btnReset) return;
+
+            // North America overhead view coordinates
+            const NA_VIEW = {
+              latitude: 45.0,
+              longitude: -100.0,
+              zoom: 3.5,
+              pitch: 0,
+              bearing: 0
+            };
+
+            btnReset.addEventListener('click', function(e) {
+              e.preventDefault();
+              // Dispatch Redux action to update map view
+              // This will be called after the site is available
+              if (window.__mapsite) {
+                window.__mapsite.dispatch(
+                  KeplerGl.updateMap(NA_VIEW)
+                );
+              }
+            });
+          })();
+        </script>
+
+        <!-- Load our React component. -->
+        <script>
+          /* Validate Mapbox Token */
+          if ((MAPBOX_TOKEN || '') === '' || MAPBOX_TOKEN === 'PROVIDE_MAPBOX_TOKEN') {
+            alert(WARNING_MESSAGE);
+          }
+
+          /** site **/
+          const reducers = (function createReducers(redux, keplerGl) {
+            return redux.combineReducers({
+              // mount keplerGl reducer
+              keplerGl: keplerGl.keplerGlReducer.initialState({
+                uiState: {
+                  readOnly: true,
+                  currentModal: null
+                }
+              })
+            });
+          }(Redux, KeplerGl));
+
+          const middleWares = (function createMiddlewares(keplerGl) {
+            return keplerGl.enhanceReduxMiddleware([
+              // Add other middlewares here
+            ]);
+          }(KeplerGl));
+
+          const enhancers = (function craeteEnhancers(redux, middles) {
+            return redux.applyMiddleware(...middles);
+          }(Redux, middleWares));
+
+          const site = (function createsite(redux, enhancers) {
+            const initialState = {};
+
+            return redux.createsite(
+              reducers,
+              initialState,
+              redux.compose(enhancers)
+            );
+          }(Redux, enhancers));
+          /** END site **/
+
+          /** COMPONENTS **/
+          var KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
+            var LogoSvg = function LogoSvg() {
+              return react.createElement(
+                "div",
+                { className: "logo-container", style: {position: 'fixed', zIndex: 10000, padding: '4px'} },
+                  react.createElement(
+                    "svg",
+                    {
+                      className: "kepler_gl__logo",
+                      width: "107px",
+                      height: "21px",
+                      viewBox: "0 0 124 24"
+                    },
+                    react.createElement(
+                      "g",
+                      { transform: "translate(13.500000, 13.500000) rotate(45.000000) translate(-13.500000, -13.500000) translate(4.000000, 4.000000)" },
+                      react.createElement("rect", { x: "0", y: "6", transform: "matrix(2.535181e-06 1 -1 2.535181e-06 18.1107 6.0369)", fill: "#535C6C", width: "12.1", height: "12.1" }),
+                      react.createElement("rect", { x: "6", y: "0", transform: "matrix(2.535182e-06 1 -1 2.535182e-06 18.1107 -6.0369)", fill:"#1FBAD6", width: "12.1", height: "12.1" })
+                    ),
+                    react.createElement(
+                      "g",
+                      {},
+                      react.createElement("path", { fill:"#1FBAD6", d: "M39,8.7h2.2l-2.8,4.2l2.9,5.1H39l-2.4-4.2h-1.3V18h-2V5l2-0.1v7.3h1.3L39,8.7z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M42.4,13.3c0-1.5,0.4-2.7,1.1-3.5s1.8-1.2,3.1-1.2c1.3,0,2.2,0.4,2.8,1.1c0.6,0.7,0.9,1.8,0.9,3.3 c0,0.4,0,0.8,0,1.1h-5.8c0,1.6,0.8,2.4,2.4,2.4c1,0,2-0.2,2.9-0.6l0.2,1.7c-0.4,0.2-0.9,0.4-1.4,0.5s-1.1,0.2-1.7,0.2 c-1.5,0-2.6-0.4-3.3-1.2C42.8,16.1,42.4,14.9,42.4,13.3z M46.6,10.1c-0.7,0-1.2,0.2-1.5,0.5c-0.4,0.4-0.6,0.9-0.6,1.7h4 c0-0.8-0.2-1.4-0.5-1.7S47.2,10.1,46.6,10.1z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M57.1,18.2c-1,0-1.8-0.3-2.3-0.9l0,0l0,1.3v2.5h-2V8.7h1.5l0.3,0.9h0c0.3-0.3,0.7-0.6,1.2-0.7 c0.4-0.2,0.9-0.3,1.4-0.3c1.2,0,2.1,0.4,2.7,1.1c0.6,0.7,0.9,2,0.9,3.7c0,1.6-0.3,2.8-1,3.7C59.2,17.8,58.3,18.2,57.1,18.2z M56.7,10.3c-0.4,0-0.8,0.1-1.1,0.2c-0.3,0.2-0.6,0.4-0.8,0.7v4.3c0.2,0.3,0.4,0.5,0.7,0.7c0.3,0.2,0.7,0.3,1.1,0.3 c0.7,0,1.2-0.2,1.6-0.7c0.4-0.5,0.5-1.3,0.5-2.5c0-0.8-0.1-1.4-0.2-1.8s-0.4-0.7-0.7-0.9C57.6,10.4,57.2,10.3,56.7,10.3z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M63.2,16V5l2-0.1v10.8c0,0.3,0.1,0.5,0.2,0.6c0.1,0.1,0.3,0.2,0.6,0.2c0.3,0,0.6,0,0.9-0.1V18 c-0.4,0.1-1,0.2-1.6,0.2c-0.8,0-1.3-0.2-1.7-0.5S63.2,16.8,63.2,16z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M68.2,13.3c0-1.5,0.4-2.7,1.1-3.5c0.7-0.8,1.8-1.2,3.1-1.2c1.3,0,2.2,0.4,2.8,1.1c0.6,0.7,0.9,1.8,0.9,3.3 c0,0.4,0,0.8,0,1.1h-5.8c0,1.6,0.8,2.4,2.4,2.4c1,0,2-0.2,2.9-0.6l0.2,1.7c-0.4,0.2-0.9,0.4-1.4,0.5s-1.1,0.2-1.7,0.2 c-1.5,0-2.6-0.4-3.3-1.2C68.6,16.1,68.2,14.9,68.2,13.3z M72.4,10.1c-0.7,0-1.2,0.2-1.5,0.5c-0.4,0.4-0.6,0.9-0.6,1.7h4 c0-0.8-0.2-1.4-0.5-1.7S73,10.1,72.4,10.1z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M80.2,8.7l0.1,1.7h0c0.3-0.6,0.7-1.1,1.1-1.4c0.4-0.3,1-0.5,1.6-0.5c0.4,0,0.7,0,1,0.1l-0.1,2 c-0.3-0.1-0.7-0.2-1-0.2c-0.7,0-1.3,0.3-1.7,0.8c-0.4,0.5-0.7,1.2-0.7,2.1V18h-2V8.7H80.2z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M83.8,17c0-0.8,0.4-1.2,1.2-1.2c0.8,0,1.2,0.4,1.2,1.2c0,0.8-0.4,1.1-1.2,1.1C84.2,18.2,83.8,17.8,83.8,17z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M88.5,18.7c0-0.8,0.4-1.4,1.2-1.8c-0.6-0.3-0.9-0.8-0.9-1.5c0-0.7,0.4-1.2,1.1-1.6c-0.3-0.3-0.6-0.6-0.7-0.9 c-0.2-0.4-0.2-0.8-0.2-1.3c0-1,0.3-1.8,0.9-2.3c0.6-0.5,1.6-0.8,2.8-0.8c0.5,0,1,0,1.4,0.1c0.4,0.1,0.8,0.2,1.1,0.4l2.4-0.2v1.5 h-1.5c0.2,0.4,0.2,0.8,0.2,1.3c0,1-0.3,1.7-0.9,2.2s-1.5,0.8-2.7,0.8c-0.7,0-1.2-0.1-1.6-0.2c-0.1,0.1-0.2,0.2-0.3,0.3 c-0.1,0.1-0.1,0.2-0.1,0.4c0,0.2,0.1,0.3,0.2,0.4c0.1,0.1,0.3,0.2,0.6,0.2l2.7,0.2c1,0.1,1.7,0.3,2.2,0.6c0.5,0.3,0.8,0.9,0.8,1.7 c0,0.6-0.2,1.1-0.5,1.5c-0.4,0.4-0.9,0.8-1.5,1c-0.7,0.2-1.5,0.4-2.4,0.4c-1.3,0-2.3-0.2-3-0.6C88.8,20.1,88.5,19.5,88.5,18.7z M95.1,18.4c0-0.3-0.1-0.5-0.3-0.7s-0.6-0.2-1.1-0.3l-2.7-0.3c-0.2,0.1-0.4,0.3-0.5,0.5c-0.1,0.2-0.2,0.4-0.2,0.6 c0,0.4,0.2,0.8,0.5,1c0.4,0.2,1,0.3,1.8,0.3C94.2,19.5,95.1,19.2,95.1,18.4z M94.3,11.5c0-0.6-0.1-1-0.4-1.2 c-0.3-0.2-0.7-0.3-1.3-0.3c-0.7,0-1.1,0.1-1.4,0.3c-0.3,0.2-0.4,0.6-0.4,1.2s0.1,1,0.4,1.2c0.3,0.2,0.7,0.3,1.4,0.3 c0.6,0,1.1-0.1,1.3-0.4S94.3,12,94.3,11.5z" }),
+                      react.createElement("path", { fill:"#1FBAD6", d: "M99.4,16V5l2-0.1v10.8c0,0.3,0.1,0.5,0.2,0.6c0.1,0.1,0.3,0.2,0.6,0.2c0.3,0,0.6,0,0.9-0.1V18 c-0.4,0.1-1,0.2-1.6,0.2c-0.8,0-1.3-0.2-1.7-0.5S99.4,16.8,99.4,16z" })
+                    )
+                  )
+                );
+              };
+
+            return function App() {
+              var rootElm = react.useRef(null);
+              var _useState = react.useState({
+                width: window.innerWidth,
+                height: window.innerHeight
+              });
+              var windowDimension = _useState[0];
+              var setDimension = _useState[1];
+              react.useEffect(function sideEffect(){
+                function handleResize() {
+                  setDimension({width: window.innerWidth, height: window.innerHeight});
+                };
+                window.addEventListener('resize', handleResize);
+                return function() {window.removeEventListener('resize', handleResize);};
+              }, []);
+              return react.createElement(
+                'div',
+                {style: {position: 'absolute', left: 0, width: '100vw', height: '100vh'}},
+                LogoSvg(),
+                react.createElement(keplerGl.KeplerGl, {
+                  mapboxApiAccessToken: mapboxToken,
+                  id: "map",
+                  width: windowDimension.width,
+                  height: windowDimension.height
+                })
+              )
+            }
+          }(React, KeplerGl, MAPBOX_TOKEN));
+
+          const app = (function createReactReduxProvider(react, reactRedux, KeplerElement) {
+            return react.createElement(
+              reactRedux.Provider,
+              {site},
+              react.createElement(KeplerElement, null)
+            )
+          }(React, ReactRedux, KeplerElement));
+          /** END COMPONENTS **/
+
+          /** Render **/
+          (function render(react, reactDOM, app) {
+            const container = document.getElementById('app');
+            const root = reactDOM.createRoot(container);
+            root.render(app);
+          }(React, ReactDOM, app));
+        </script>
+        <!-- The next script will show how to interact directly with Kepler map site -->
+        <script>
+          /**
+           * Customize map.
+           * In the following section you can use the site object to dispatch Kepler.gl actions
+           * to add new data and customize behavior
+           */
+          (function customize(keplerGl, site) {
+            const DATASET_ID = "vx4wwy";
+            const DATA_URL = "./map_status_latest.json";
+            const POLL_MS = 10 * 60 * 1000; // 10 minutes
+
+            // Expose site globally for reset view button
+            window.__mapsite = site;
+
+const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id":"unt8pyo","type":"point","config":{"dataId":"vx4wwy","columnMode":"points","label":"site-coords","color":[98,206,173],"highlightColor":[252,242,26,255],"columns":{"lat":"Latitude","lng":"Longitude"},"isVisible":true,"visConfig":{"radius":10,"fixedRadius":false,"opacity":0.8,"outline":false,"thickness":2,"strokeColor":null,"colorRange":{"name":"Status","type":"custom","category":"Custom","colors":["#00c853","#ffd600","#d50000"]},"strokeColorRange":{"name":"Global Warming","type":"sequential","category":"Uber","colors":["#4C0035","#880030","#B72F15","#D6610A","#EF9100","#FFC300"]},"radiusRange":[8,36],"filled":true,"billboard":false,"allowHover":true,"showNeighborOnHover":false,"showHighlightColor":true},"hidden":false,"textLabel":[{"field":null,"color":[255,255,255],"size":18,"offset":[0,0],"anchor":"start","alignment":"center","outlineWidth":0,"outlineColor":[255,0,0,255],"background":false,"backgroundColor":[0,0,200,255]}]},"visualChannels":{"colorField":{"name":"status_code","type":"integer"},"colorScale":"ordinal","strokeColorField":null,"strokeColorScale":"quantile","sizeField":{"name":"size_code","type":"integer"},"sizeScale":"linear"}}],"effects":[],"interactionConfig":{"tooltip":{"fieldsToShow":{"vx4wwy":[{"name":"site","format":null},{"name":"server_ip","format":null},{"name":"gateway_ip","format":null},{"name":"status","format":null},{"name":"server_up","format":null},{"name":"gateway_up","format":null},{"name":"timestamp","format":null},{"name":"dc_name","format":null}]},"compareMode":false,"compareType":"absolute","enabled":true},"brush":{"size":0.5,"enabled":false},"geocoder":{"enabled":false},"coordinate":{"enabled":false}},"layerBlending":"normal","overlayBlending":"normal","splitMaps":[],"animationConfig":{"currentTime":null,"speed":1},"editor":{"features":[],"visible":true}},"mapState":{"bearing":24,"dragRotate":true,"latitude":42.87656887523501,"longitude":-116.3805689153473,"pitch":50,"zoom":3.644376141064472,"isSplit":false,"isViewportSynced":true,"isZoomLocked":false,"splitMapViewports":[]},"mapStyle":{"styleType":"dark-matter","topLayerGroups":{},"visibleLayerGroups":{"label":true,"road":true,"border":false,"building":true,"water":true,"land":true,"3d building":false},"threeDBuildingColor":[15.035172933000911,15.035172933000911,15.035172933000911],"backgroundColor":[0,0,0],"mapStyles":{}},"uiState":{"mapControls":{"mapLegend":{"active":false}}}}};
+  const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id":"unt8pyo","type":"point","config":{"dataId":"vx4wwy","columnMode":"points","label":"site-coords","color":[98,206,173],"highlightColor":[252,242,26,255],"columns":{"lat":"Latitude","lng":"Longitude"},"isVisible":true,"visConfig":{"radius":10,"fixedRadius":false,"opacity":0.8,"outline":false,"thickness":2,"strokeColor":null,"colorRange":{"name":"Status","type":"custom","category":"Custom","colors":["#00c853","#ffd600","#d50000"]},"strokeColorRange":{"name":"Global Warming","type":"sequential","category":"Uber","colors":["#4C0035","#880030","#B72F15","#D6610A","#EF9100","#FFC300"]},"radiusRange":[8,36],"filled":true,"billboard":false,"allowHover":true,"showNeighborOnHover":false,"showHighlightColor":true},"hidden":false,"textLabel":[{"field":null,"color":[255,255,255],"size":18,"offset":[0,0],"anchor":"start","alignment":"center","outlineWidth":0,"outlineColor":[255,0,0,255],"background":false,"backgroundColor":[0,0,200,255]}]},"visualChannels":{"colorField":{"name":"status_code","type":"integer"},"colorScale":"ordinal","strokeColorField":null,"strokeColorScale":"quantile","sizeField":{"name":"size_code","type":"integer"},"sizeScale":"linear"}}],"effects":[],"interactionConfig":{"tooltip":{"fieldsToShow":{"vx4wwy":[{"name":"site","format":null},{"name":"server_ip","format":null},{"name":"gateway_ip","format":null},{"name":"status","format":null},{"name":"server_up","format":null},{"name":"gateway_up","format":null},{"name":"timestamp","format":null},{"name":"dc_name","format":null}]},"compareMode":false,"compareType":"absolute","enabled":true},"brush":{"size":0.5,"enabled":false},"geocoder":{"enabled":false},"coordinate":{"enabled":false}},"layerBlending":"normal","overlayBlending":"normal","splitMaps":[],"animationConfig":{"currentTime":null,"speed":1},"editor":{"features":[],"visible":true}},"mapState":{"bearing":24,"dragRotate":true,"latitude":0,"longitude":0,"pitch":50,"zoom":3.644376141064472,"isSplit":false,"isViewportSynced":true,"isZoomLocked":false,"splitMapViewports":[]},"mapStyle":{"styleType":"dark-matter","topLayerGroups":{},"visibleLayerGroups":{"label":true,"road":true,"border":false,"building":true,"water":true,"land":true,"3d building":false},"threeDBuildingColor":[15.035172933000911,15.035172933000911,15.035172933000911],"backgroundColor":[0,0,0],"mapStyles":{}},"uiState":{"mapControls":{"mapLegend":{"active":false}}}}};
+
+            // Load initial config (layers, basemap, etc.)
+            const loadedConfig = keplerGl.KeplerGlSchema.load([], config).config;
+
+            // Adjust these as needed for application (shows when hovering over site marked on map)
+            const FIELD_ORDER = [
+              "timestamp","run_id","site","dc_code","dc_name",
+              "server_ip","gateway_ip","server_up","gateway_up",
+              "status","status_code","size_code","Latitude","Longitude"
+            ];
+
+            const FIELD_TYPES = {
+              timestamp: "string",
+              run_id: "string",
+              site: "string",
+              dc_code: "string",
+              dc_name: "string",
+              server_ip: "string",
+              gateway_ip: "string",
+              server_up: "string",
+              gateway_up: "string",
+              status: "string",
+              status_code: "integer",
+              size_code: "integer",
+              Latitude: "real",
+              Longitude: "real",
+            };
+
+            function rowsToDataset(rows) {
+              const fields = FIELD_ORDER.map((name) => ({
+                name,
+                type: FIELD_TYPES[name] || "string",
+                format: "",
+              }));
+              const dataRows = rows.map((r) => {
+                const statusCode = Number(r.status_code);
+                let timestamp = r.timestamp || "";
+                
+                // Convert timestamp to human readable format
+                if (/^\d{10,13}$/.test(String(timestamp))) {
+                  const ms = String(timestamp).length === 13 ? Number(timestamp) : Number(timestamp) * 1000;
+                  const date = new Date(ms);
+                  timestamp = date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                  }) + ` (${r.timestamp})`;
+                }
+                
+                const row = {
+                  ...r,
+                  timestamp,
+                  // Make yellow (1) and red (2) markers the larger size bucket
+                  size_code: statusCode >= 1 ? 2 : 1,
+                };
+                return FIELD_ORDER.map((k) => (row[k] === undefined ? null : row[k]));
+              });
+              return {
+                info: { id: DATASET_ID, label: "Live Site Status" },
+                data: { fields, rows: dataRows },
+              };
+            }
+
+            async function refreshData() {
+              try {
+                const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-site" });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const rows = await res.json();
+
+                site.dispatch(
+                  keplerGl.addDataToMap({
+                    datasets: rowsToDataset(rows),
+                    config: loadedConfig,
+                    options: { centerMap: false, keepExistingConfig: true },
+                  })
+                );
+
+                const stamp = rows && rows.length ? rows[0].timestamp : "";
+                const el = document.getElementById("last-updated");
+                const tsDisplay = document.getElementById("timestamp-display");
+                
+                let timestamp = stamp;
+                
+                // If no timestamp from server, use current time
+                if (!timestamp) {
+                  timestamp = Date.now();
+                }
+                
+                // Format timestamp to human-readable format
+                let humanReadable = timestamp;
+                let numericStamp = timestamp;
+                let dateObj = null;
+                
+                // Check if it looks like a Unix timestamp (all digits, long)
+                if (/^\d{10,13}$/.test(String(timestamp))) {
+                  const ms = String(timestamp).length === 13 ? Number(timestamp) : Number(timestamp) * 1000;
+                  dateObj = new Date(ms);
+                } else if (typeof timestamp === 'string') {
+                  // Try parsing as ISO string or other formats
+                  dateObj = new Date(timestamp);
+                }
+                
+                if (dateObj && !isNaN(dateObj.getTime())) {
+                  // Format for top display: "Thursday 12/25/2025 3:25:30 PM"
+                  const dayName = dateObj.toLocaleString('en-US', { weekday: 'long' });
+                  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                  const dayNum = String(dateObj.getDate()).padStart(2, '0');
+                  const year = dateObj.getFullYear();
+                  const timeStr = dateObj.toLocaleString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                  });
+                  
+                  const topFormatted = `${dayName} ${month}/${dayNum}/${year} ${timeStr}`;
+                  if (tsDisplay) tsDisplay.textContent = `Time of event EST: ${topFormatted}`;
+                  
+                  // Format for panel: "Dec 25, 2025, 03:25:30 PM"
+                  humanReadable = dateObj.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                  });
+                  numericStamp = stamp || Date.now();
+                }
+                
+                if (el) el.textContent = `Last update: ${humanReadable} (${numericStamp})`;
+
+                // Update offline panel: group offline sites into Red (2) and Yellow (1)
+                try {
+                  const panel = document.getElementById('offline-contents');
+                  if (panel) {
+                    const offline = (rows || []).filter(r => {
+                      const sc = Number(r.status_code);
+                      return sc === 1 || sc === 2;
+                    });
+
+                    // site coordinates for map navigation
+                    window.__siteCoords = {};
+                    offline.forEach(r => {
+                      if (r.site) {
+                        window.__siteCoords[r.site] = {
+                          lat: Number(r.Latitude),
+                          lng: Number(r.Longitude)
+                        };
+                      }
+                    });
+
+                    const groups = { red: [], yellow: [] };
+                    offline.forEach(r => {
+                      const sc = Number(r.status_code);
+                      const site = (r.site && r.site !== 'null') ? r.site : null;
+                      const dc = r.dc_name || 'Unknown';
+                      if (sc === 2) {
+                        groups.red.push({ site, dc });
+                      }
+                      else if (sc === 1) {
+                        groups.yellow.push({ site, dc });
+                      }
+                    });
+
+                    // Sort each group numerically by site number
+                    groups.red.sort((a, b) => Number(a.site) - Number(b.site));
+                    groups.yellow.sort((a, b) => Number(a.site) - Number(b.site));
+
+                    function escapeHtml(s) {
+                      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    }
+
+                    function renderGroup(label, cls, items) {
+                      try {
+                        items = Array.isArray(items) ? items : [];
+                        const itemHtml = items.map(function(it) {
+                          try {
+                            const dc = (it && it.dc) ? it.dc : 'Unknown';
+                            const display = (it && it.site) ? `${escapeHtml(dc)} - ${escapeHtml(it.site)}` : escapeHtml(dc);
+                            const attrs = (it && it.site) ? `data-site="${escapeHtml(it.site)}" style="cursor:pointer;" title="Click to center map"` : '';
+                            return `<div class="offline-item" ${attrs}>${display}</div>`;
+                          } catch (e) {
+                            console.error('offline item render error', e, it);
+                            return '';
+                          }
+                        }).join('');
+                        return `<div class="offline-group ${cls}"><div><span class="offline-badge"></span><strong>${label}</strong><span class="offline-count">(${items.length})</span></div>${itemHtml}</div>`;
+                      } catch (e) {
+                        console.error('renderGroup error', e, label, cls, items);
+                        return `<div class="offline-group ${cls}"><div><span class="offline-badge"></span><strong>${label}</strong><span class="offline-count">(0)</span></div><div class="offline-item">(render error)</div></div>`;
+                      }
+                    }
+
+                    let html = '';
+                    const redHtml = renderGroup('Server Down', 'status-red', groups.red);
+                    const yellowHtml = renderGroup('Gateway Up', 'status-yellow', groups.yellow);
+                    html += redHtml;
+                    html += yellowHtml;
+                    if (!offline.length) html = '<div style="font-size:12px; opacity:0.8">No offline sites</div>';
+                    panel.innerHTML = html;
+
+                    // Add click handlers to site items
+                    setTimeout(() => {
+                      const items = panel.querySelectorAll('.offline-item[data-site]');
+                      items.forEach(el => {
+                        el.addEventListener('click', function(e) {
+                          e.stopPropagation();
+                          const siteNum = this.getAttribute('data-site');
+                          const coords = window.__siteCoords[siteNum];
+                          if (coords) {
+                            // Update Kepler.gl map viewport
+                            site.dispatch(
+                              keplerGl.updateMap({
+                                latitude: coords.lat,
+                                longitude: coords.lng,
+                                zoom: 8,
+                                pitch: 0,
+                                bearing: 0
+                              })
+                            );
+                          }
+                        });
+                      });
+                    }, 0);
+                  }
+                } catch (err) {
+                  console.error('Failed to update offline panel', err);
+                }
+              } catch (e) {
+                console.error("Refresh failed:", e);
+              }
+            }
+
+            // Initial load + 10-minute polling
+            window.setTimeout(() => refreshData(), 500);
+            window.setInterval(() => refreshData(), POLL_MS);
+          }(KeplerGl, site))
+        </script>
+      </body>
+    </html>
+  

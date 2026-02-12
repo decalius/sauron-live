@@ -1,0 +1,24 @@
+node_modules/
+.DS_site
+*.pyc
+node_modules/
+.DS_site
+*.log
+dist/
+coverage/
+
+# Local input data (do not commit real environments)
+sites.csv
+DC_LIST.csv
+
+# Scanner outputs
+logs/
+summary_latest.json
+failures_latest.json
+failures_latest.csv
+map_status_latest.json
+map_status_latest.csv
+map_status_latest.geojson
+
+# Archived runs
+*.zip

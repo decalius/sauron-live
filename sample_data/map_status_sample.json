@@ -1,0 +1,40 @@
+[
+  {
+    "timestamp": "2026-02-09T12:00:00-05:00",
+    "run_id": "demo-1",
+    "site": "SITE-0001",
+    "dc_code": "ALP",
+    "dc_name": "Alpha Hub",
+    "server_ip": "198.51.100.10",
+    "gateway_ip": "198.51.100.1",
+    "server_up": true,
+    "gateway_up": true,
+    "status": "green",
+    "status_code": 0,
+    "Latitude": 0.0,
+    "Longitude": 0.0,
+    "Address": "123 Example St",
+    "City": "Example City",
+    "State": "CA",
+    "ZIP": "94103"
+  },
+  {
+    "timestamp": "2026-02-09T12:00:00-05:00",
+    "run_id": "demo-1",
+    "site": "SITE-0002",
+    "dc_code": "BRV",
+    "dc_name": "Bravo Hub",
+    "server_ip": "203.0.113.10",
+    "gateway_ip": "203.0.113.1",
+    "server_up": false,
+    "gateway_up": true,
+    "status": "yellow",
+    "status_code": 1,
+    "Latitude": 1.0,
+    "Longitude": 1.0,
+    "Address": "456 Sample Ave",
+    "City": "Sample Town",
+    "State": "CA",
+    "ZIP": "90012"
+  }
+]
