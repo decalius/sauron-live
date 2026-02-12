@@ -3,7 +3,7 @@
     <html>
       <head>
         <meta charset="UTF-8"/>
-        <title>Network Health Monitor - Live site Status</title>
+        <title>Sauron - Site Status</title>
 
         <!--Uber Font-->
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
@@ -16,10 +16,10 @@
         <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet">
 
         <!-— facebook open graph tags -->
-        <meta property="og:url" content="http://github.com/your-username/sauron-scanner" />
-        <meta property="og:title" content="Network Health Monitor - Automated site Connectivity Scanner" />
-        <meta property="og:description" content="Real-time geospatial dashboard for monitoring network health across distributed locations. Parallel scanning, 3D visualization, and automated alerting." />
-        <meta property="og:site_name" content="Sauron Scanner v2" />
+        <meta property="og:url" content="http://github.com/decalius/sauron-live" />
+        <meta property="og:title" content="Sauron - Site Status" />
+        <meta property="og:description" content="Real time geospatial dashboard for monitoring network health across distributed locations. Parallel scanning, 3D visualization, and automated alerting." />
+        <meta property="og:site_name" content="Sauron" />
         <meta property="og:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
         <meta property="og:image:type" content="image/png" />
         <meta property="og:image:width" content="800" />
@@ -29,8 +29,8 @@
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:site" content="@openjsf">
         <meta name="twitter:creator" content="@openjsf">
-        <meta name="twitter:title" content="Large-scale WebGL-powered Geospatial Data Visualization Tool">
-        <meta name="twitter:description" content="Kepler.gl is a powerful web-based geospatial data analysis tool. Built on a high performance rendering engine and designed for large-scale data sets.">
+        <meta name="twitter:title" content="WebGL powered Geospatial Data Visualization Tool">
+        <meta name="twitter:description" content="Kepler.gl is a powerful web-based geospatial data analysis tool. Built on a high performance rendering engine and designed for large data sets.">
         <meta name="twitter:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
 
         <!-- Load React/Redux -->
@@ -383,6 +383,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
             // Load initial config (layers, basemap, etc.)
             const loadedConfig = keplerGl.KeplerGlSchema.load([], config).config;
 
+            // Adjust these as needed for application (shows when hovering over site marked on map)
             const FIELD_ORDER = [
               "timestamp","run_id","site","dc_code","dc_name",
               "server_ip","gateway_ip","server_up","gateway_up",
@@ -416,7 +417,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                 const statusCode = Number(r.status_code);
                 let timestamp = r.timestamp || "";
                 
-                // Convert timestamp to human-readable format
+                // Convert timestamp to human readable format
                 if (/^\d{10,13}$/.test(String(timestamp))) {
                   const ms = String(timestamp).length === 13 ? Number(timestamp) : Number(timestamp) * 1000;
                   const date = new Date(ms);
@@ -434,7 +435,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                 const row = {
                   ...r,
                   timestamp,
-                  // Make yellow (1) and red (2) markers the larger size bucket.
+                  // Make yellow (1) and red (2) markers the larger size bucket
                   size_code: statusCode >= 1 ? 2 : 1,
                 };
                 return FIELD_ORDER.map((k) => (row[k] === undefined ? null : row[k]));
@@ -485,7 +486,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                 }
                 
                 if (dateObj && !isNaN(dateObj.getTime())) {
-                  // Format for top display: "Sunday 02/08/2026 1:50:49 AM"
+                  // Format for top display: "Thursday 12/25/2025 3:25:30 PM"
                   const dayName = dateObj.toLocaleString('en-US', { weekday: 'long' });
                   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                   const dayNum = String(dateObj.getDate()).padStart(2, '0');
@@ -500,7 +501,7 @@ const config = {"version":"v1","config":{"visState":{"filters":[],"layers":[{"id
                   const topFormatted = `${dayName} ${month}/${dayNum}/${year} ${timeStr}`;
                   if (tsDisplay) tsDisplay.textContent = `Time of event EST: ${topFormatted}`;
                   
-                  // Format for panel: "Feb 08, 2026, 02:14:30 PM"
+                  // Format for panel: "Dec 25, 2025, 03:25:30 PM"
                   humanReadable = dateObj.toLocaleString('en-US', {
                     year: 'numeric',
                     month: 'short',
