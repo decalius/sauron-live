@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apollo - Kepler</title>
+    <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css" />
+    <link href="https://unpkg.com/kepler.gl@3.2.5/umd/keplergl.min.css" rel="stylesheet" />
+    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/redux@4.2.1/dist/redux.js" crossorigin></script>
+    <script src="https://unpkg.com/react-redux@8.1.2/dist/react-redux.min.js" crossorigin></script>
+    <script src="https://unpkg.com/styled-components@6.1.8/dist/styled-components.min.js" crossorigin></script>
+    <script src="https://unpkg.com/kepler.gl@3.2.5/umd/keplergl.min.js" crossorigin></script>
+
+    <style>
+      html,
+      body,
+      #app {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      }
+
+      .glass {
+        background: rgba(0, 0, 0, 0.62);
+        color: #fff;
+        border-radius: 6px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      }
+
+      #timestamp-display {
+        position: fixed;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10002;
+        background: rgba(0, 0, 0, 0.82);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 4px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      #left-stack {
+        position: fixed;
+        top: 56px;
+        left: 12px;
+        z-index: 10002;
+        width: 340px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .panel {
+        padding: 10px;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 8px;
+      }
+
+      .panel-title {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .arrow {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 14px;
+        width: 12px;
+        height: 12px;
+        margin-left: 8px;
+        transition: transform 0.18s ease;
+        overflow: visible;
+        line-height: 0;
+        opacity: 0.95;
+      }
+
+      .arrow::before {
+        content: "";
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 7px solid #fff;
+      }
+
+      .collapsed .arrow {
+        transform: rotate(-90deg);
+      }
+
+      .collapsible-content {
+        overflow-y: auto;
+        transition: max-height 0.22s ease, padding 0.18s ease;
+        max-height: 72vh;
+        padding-right: 4px;
+      }
+
+      .collapsed .collapsible-content {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+
+      .section {
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: 0;
+      }
+
+      .section-title {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .metric {
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        text-align: center;
+        padding: 6px 4px;
+      }
+
+      .metric .label {
+        font-size: 10px;
+        opacity: 0.8;
+      }
+
+      .metric .value {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .controls-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .controls-grid .full {
+        grid-column: 1 / -1;
+      }
+
+      .control-label {
+        display: block;
+        font-size: 11px;
+        opacity: 0.85;
+        margin-bottom: 4px;
+      }
+
+      .control-input,
+      .control-select {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        padding: 7px 8px;
+        font-size: 12px;
+      }
+
+      .control-select option {
+        color: #111;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+        font-size: 12px;
+      }
+
+      .action-btn {
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .actions-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .offline-group {
+        margin-bottom: 8px;
+      }
+
+      .offline-badge {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      .status-red .offline-badge {
+        background: #d50000;
+      }
+
+      .status-yellow .offline-badge {
+        background: #ffd600;
+      }
+
+      .offline-item,
+      .change-item {
+        font-size: 12px;
+        margin: 3px 0;
+        line-height: 1.3;
+      }
+
+      .offline-item[data-store-key],
+      .change-item[data-store-key] {
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 3px;
+        transition: background-color 0.15s ease;
+      }
+
+      .offline-item[data-store-key]:hover,
+      .change-item[data-store-key]:hover {
+        background-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .offline-count {
+        font-weight: 700;
+        margin-left: 6px;
+      }
+
+      .tiny-muted {
+        opacity: 0.75;
+        font-size: 11px;
+      }
+
+      #trend-canvas {
+        width: 310px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 4px;
+      }
+
+      #reset-view-btn {
+        position: fixed;
+        bottom: 12px;
+        left: 12px;
+        z-index: 10002;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 14px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      #legend {
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        z-index: 10002;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 4px;
+        padding: 8px 10px;
+        color: #fff;
+        font-size: 12px;
+      }
+
+      #legend .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 3px 0;
+      }
+
+      #legend .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+      }
+
+      .ok { color: #00c853; }
+      .warn { color: #ffd600; }
+      .bad { color: #ff5252; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="timestamp-display">Time of event EST: Loading...</div>
+
+    <div id="left-stack">
+      <div id="offline-panel" class="panel glass collapsed" aria-live="polite">
+        <div class="panel-header" role="button" aria-expanded="false" tabindex="0">
+          <div class="panel-title">Offline Stores</div>
+          <div><span class="arrow" aria-hidden="true"></span></div>
+        </div>
+        <div id="offline-contents" class="collapsible-content">
+          <div class="tiny-muted">Loading...</div>
+        </div>
+      </div>
+
+      <div id="ops-panel" class="panel glass collapsed" aria-live="polite">
+        <div class="panel-header" role="button" aria-expanded="false" tabindex="0">
+          <div class="panel-title">Operations Menu</div>
+          <div><span class="arrow" aria-hidden="true"></span></div>
+        </div>
+
+        <div class="collapsible-content">
+          <div class="section">
+            <div class="section-title">Overall Stats</div>
+            <div class="metrics-grid">
+              <div class="metric"><div class="label">Total</div><div class="value" id="metric-total">0</div></div>
+              <div class="metric"><div class="label">Online</div><div class="value ok" id="metric-online">0</div></div>
+              <div class="metric"><div class="label">Gateway Up</div><div class="value warn" id="metric-yellow">0</div></div>
+              <div class="metric"><div class="label">Gateway Down</div><div class="value bad" id="metric-red">0</div></div>
+              <div class="metric"><div class="label">Healthy %</div><div class="value" id="metric-healthy">0%</div></div>
+              <div class="metric"><div class="label">Filtered</div><div class="value" id="metric-filtered">0</div></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Filtering</div>
+            <div class="controls-grid">
+              <div class="full">
+                <label class="control-label" for="search-input">Search (store, IP, city, address)</label>
+                <input id="search-input" class="control-input" type="text" placeholder="Type to filter..." />
+              </div>
+
+              <div>
+                <label class="control-label" for="status-filter">Status</label>
+                <select id="status-filter" class="control-select">
+                  <option value="all">All</option>
+                  <option value="green">Online</option>
+                  <option value="yellow">Gateway Up</option>
+                  <option value="red">Gateway Down</option>
+                  <option value="offline">Offline Only</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="control-label" for="dc-filter">DC</label>
+                <select id="dc-filter" class="control-select">
+                  <option value="all">All DCs</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="control-label" for="state-filter">State</label>
+                <select id="state-filter" class="control-select">
+                  <option value="all">All States</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="control-label" for="trend-scope">Trend Scope</label>
+                <select id="trend-scope" class="control-select">
+                  <option value="global">Global</option>
+                  <option value="dc">Current DC</option>
+                  <option value="store">Selected Store</option>
+                </select>
+              </div>
+
+              <div class="full toggle-row">
+                <input id="offline-only" type="checkbox" />
+                <label for="offline-only">Offline only</label>
+                <button id="clear-filters" class="action-btn" style="margin-left:auto">Clear Filters</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Changed Since Last Run</div>
+            <div id="changes-contents">
+              <div class="tiny-muted">Loading...</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Selected Store Actions</div>
+            <div id="selected-store-details" class="tiny-muted" style="margin-bottom:8px">Use offline/changed rows to select a store.</div>
+            <div class="actions-buttons">
+              <button id="btn-copy-store" class="action-btn" disabled>Copy Store</button>
+              <button id="btn-copy-ip" class="action-btn" disabled>Copy Server IP</button>
+              <button id="btn-copy-ping" class="action-btn" disabled>Copy Ping Cmd</button>
+              <button id="btn-copy-trace" class="action-btn" disabled>Copy Trace Cmd</button>
+            </div>
+            <div id="actions-status" class="tiny-muted" style="margin-top:8px"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">24h Uptime Trend</div>
+            <canvas id="trend-canvas" width="310" height="70"></canvas>
+            <div id="trend-caption" class="tiny-muted" style="margin-top:6px">Global</div>
+            <div id="trend-note" class="tiny-muted"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="reset-view-btn" title="Reset map to North America overview">â†‘ Reset View</button>
+
+    <div id="legend">
+      <div class="row"><span class="dot" style="background:#00c853"></span><span>Online</span></div>
+      <div class="row"><span class="dot" style="background:#ffd600"></span><span>Gateway Up</span></div>
+      <div class="row"><span class="dot" style="background:#d50000"></span><span>Gateway Down</span></div>
+    </div>
+
+    <script>
+      const MAPBOX_TOKEN = new URLSearchParams(window.location.search || "").get("mapboxToken") || "";
+      const DATASET_ID = "apollo_live";
+      const DATA_URL = "./sample_data/map_status_sample.json";
+      const DEFAULT_POLL_MS = 30 * 1000;
+      const MAX_TREND_RUNS = 160;
+      const PANEL_STATE_KEY = "keplerPanelCollapsed_v3";
+      const STORE_STATE_KEY = "keplerStoreState_v2";
+      const LAST_STATUS_KEY = "keplerLastStatus_v2";
+      const CAMERA_STATE_KEY = "keplerCameraState_v1";
+
+      function parsePollMsFromUrl() {
+        try {
+          const params = new URLSearchParams(window.location.search || "");
+          const pollSecRaw = params.get("pollSec");
+          const pollMsRaw = params.get("pollMs");
+          if (pollSecRaw != null) {
+            const sec = Number(pollSecRaw);
+            if (Number.isFinite(sec) && sec >= 5) return Math.round(sec * 1000);
+          }
+          if (pollMsRaw != null) {
+            const ms = Number(pollMsRaw);
+            if (Number.isFinite(ms) && ms >= 5000) return Math.round(ms);
+          }
+        } catch (_error) {}
+        return DEFAULT_POLL_MS;
+      }
+
+      const POLL_MS = parsePollMsFromUrl();
+
+      const NA_VIEW = {
+        latitude: 45.0,
+        longitude: -100.0,
+        zoom: 3.5,
+        pitch: 0,
+        bearing: 0
+      };
+
+      const FIELD_ORDER = [
+        "timestamp", "run_id", "store", "dc_code", "dc_name", "server_ip", "gateway_ip", "server_up", "gateway_up",
+        "status", "status_code", "size_code", "Latitude", "Longitude", "Address", "City", "State", "ZIP"
+      ];
+
+      const FIELD_TYPES = {
+        timestamp: "string", run_id: "string", store: "string", dc_code: "string", dc_name: "string", server_ip: "string",
+        gateway_ip: "string", server_up: "string", gateway_up: "string", status: "string", status_code: "integer", size_code: "integer",
+        Latitude: "real", Longitude: "real", Address: "string", City: "string", State: "string", ZIP: "string"
+      };
+
+      const reducers = Redux.combineReducers({
+        keplerGl: KeplerGl.keplerGlReducer.initialState({
+          uiState: { readOnly: true, currentModal: null }
+        })
+      });
+
+      const middleWares = KeplerGl.enhanceReduxMiddleware([]);
+      const enhancers = Redux.applyMiddleware(...middleWares);
+      const store = Redux.createStore(reducers, {}, Redux.compose(enhancers));
+      window.__mapStore = store;
+
+      const config = {
+        version: "v1",
+        config: {
+          visState: {
+            filters: [],
+            layers: [{
+              id: "apollo_points",
+              type: "point",
+              config: {
+                dataId: DATASET_ID,
+                label: "Stores",
+                color: [0, 200, 83],
+                columns: { lat: "Latitude", lng: "Longitude" },
+                isVisible: true,
+                visConfig: {
+                  radius: 10,
+                  opacity: 0.8,
+                  outline: false,
+                  thickness: 2,
+                  colorRange: {
+                    name: "Status",
+                    type: "custom",
+                    category: "Custom",
+                    colors: ["#00c853", "#ffd600", "#d50000"]
+                  },
+                  radiusRange: [8, 36],
+                  filled: true,
+                  billboard: false,
+                  allowHover: true,
+                  showNeighborOnHover: false,
+                  showHighlightColor: true
+                },
+                hidden: false,
+                textLabel: []
+              },
+              visualChannels: {
+                colorField: { name: "status_code", type: "integer" },
+                colorScale: "ordinal",
+                sizeField: { name: "size_code", type: "integer" },
+                sizeScale: "linear"
+              }
+            }],
+            interactionConfig: {
+              tooltip: {
+                fieldsToShow: {
+                  [DATASET_ID]: [
+                    { name: "store", format: null }, { name: "dc_name", format: null }, { name: "server_ip", format: null },
+                    { name: "gateway_ip", format: null }, { name: "status", format: null }, { name: "server_up", format: null },
+                    { name: "gateway_up", format: null }, { name: "timestamp", format: null }
+                  ]
+                },
+                compareMode: false,
+                compareType: "absolute",
+                enabled: true
+              },
+              brush: { size: 0.5, enabled: false },
+              geocoder: { enabled: false },
+              coordinate: { enabled: false }
+            },
+            layerBlending: "normal",
+            overlayBlending: "normal",
+            splitMaps: [],
+            animationConfig: { currentTime: null, speed: 1 }
+          },
+          mapState: {
+            bearing: 0,
+            dragRotate: true,
+            latitude: NA_VIEW.latitude,
+            longitude: NA_VIEW.longitude,
+            pitch: NA_VIEW.pitch,
+            zoom: NA_VIEW.zoom,
+            isSplit: false,
+            isViewportSynced: true,
+            isZoomLocked: false,
+            splitMapViewports: []
+          },
+          mapStyle: {
+            styleType: "dark-matter",
+            topLayerGroups: {},
+            visibleLayerGroups: { label: true, road: true, border: false, building: true, water: true, land: true, "3d building": false },
+            threeDBuildingColor: [15.0, 15.0, 15.0],
+            backgroundColor: [0, 0, 0],
+            mapStyles: {}
+          },
+          uiState: { mapControls: { mapLegend: { active: false } } }
+        }
+      };
+
+      const loadedConfig = KeplerGl.KeplerGlSchema.load([], config).config;
+
+      const KeplerElement = (function makeKeplerElement(react, keplerGl, mapboxToken) {
+        return function App() {
+          const [windowDimension, setDimension] = react.useState({ width: window.innerWidth, height: window.innerHeight });
+
+          react.useEffect(function sideEffect() {
+            function handleResize() {
+              setDimension({ width: window.innerWidth, height: window.innerHeight });
+            }
+            window.addEventListener("resize", handleResize);
+            return function () {
+              window.removeEventListener("resize", handleResize);
+            };
+          }, []);
+
+          return react.createElement("div", { style: { position: "absolute", left: 0, width: "100vw", height: "100vh" } },
+            react.createElement(keplerGl.KeplerGl, {
+              mapboxApiAccessToken: mapboxToken,
+              id: "map",
+              width: windowDimension.width,
+              height: windowDimension.height
+            })
+          );
+        };
+      })(React, KeplerGl, MAPBOX_TOKEN);
+
+      const app = React.createElement(ReactRedux.Provider, { store }, React.createElement(KeplerElement, null));
+      const root = ReactDOM.createRoot(document.getElementById("app"));
+      root.render(app);
+
+      (function () {
+        const controls = {
+          search: document.getElementById("search-input"),
+          status: document.getElementById("status-filter"),
+          dc: document.getElementById("dc-filter"),
+          state: document.getElementById("state-filter"),
+          offlineOnly: document.getElementById("offline-only"),
+          clear: document.getElementById("clear-filters"),
+          trendScope: document.getElementById("trend-scope")
+        };
+
+        let latestRows = [];
+        let filteredRows = [];
+        let latestChanges = [];
+        let selectedRow = null;
+        let selectedKey = null;
+        let currentRunMs = Date.now();
+        let storeCoords = {};
+        const trendSnapshots = [];
+        const storeState = loadObject(STORE_STATE_KEY, {});
+        const lastStatusSnapshot = loadObject(LAST_STATUS_KEY, {});
+
+        function makeRowKey(row) {
+          const storeNo = row && row.store ? String(row.store).trim() : "";
+          const dcCode = row && row.dc_code ? String(row.dc_code).trim() : "";
+          const serverIp = row && row.server_ip ? String(row.server_ip).trim() : "";
+          return `${storeNo}|${dcCode}|${serverIp}`;
+        }
+
+        function parseTimestamp(value) {
+          if (!value) return new Date();
+          const asText = String(value);
+          if (/^\d{10,13}$/.test(asText)) {
+            const ms = asText.length === 13 ? Number(asText) : Number(asText) * 1000;
+            return new Date(ms);
+          }
+          const parsed = new Date(asText);
+          return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+        }
+
+        function formatTopTimestamp(value) {
+          const dateObj = parseTimestamp(value);
+          const dayName = dateObj.toLocaleString("en-US", { weekday: "long" });
+          const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+          const day = String(dateObj.getDate()).padStart(2, "0");
+          const year = dateObj.getFullYear();
+          const time = dateObj.toLocaleString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true });
+          return `${dayName} ${month}/${day}/${year} ${time}`;
+        }
+
+        function formatMinutes(value) {
+          if (!Number.isFinite(value) || value < 0) return "-";
+          if (value < 60) return `${Math.round(value)}m`;
+          const hrs = Math.floor(value / 60);
+          const mins = Math.round(value % 60);
+          return `${hrs}h ${mins}m`;
+        }
+
+        function escapeHtml(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function statusText(statusCode) {
+          if (statusCode === 2) return "Gateway Down";
+          if (statusCode === 1) return "Gateway Up";
+          if (statusCode === 0) return "Online";
+          return "Unknown";
+        }
+
+        function loadObject(key, fallback) {
+          try {
+            const parsed = JSON.parse(localStorage.getItem(key) || "null");
+            if (parsed && typeof parsed === "object") return parsed;
+          } catch (_error) {}
+          return fallback;
+        }
+
+        function saveObject(key, value) {
+          try {
+            localStorage.setItem(key, JSON.stringify(value));
+          } catch (_error) {}
+        }
+
+        function getCurrentMapState() {
+          try {
+            const state = store.getState();
+            return state && state.keplerGl && state.keplerGl.map ? state.keplerGl.map.mapState : null;
+          } catch (_error) {
+            return null;
+          }
+        }
+
+        function saveCameraState() {
+          const mapState = getCurrentMapState();
+          if (!mapState) return;
+          const latitude = Number(mapState.latitude);
+          const longitude = Number(mapState.longitude);
+          const zoom = Number(mapState.zoom);
+          const pitch = Number(mapState.pitch);
+          const bearing = Number(mapState.bearing);
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+          saveObject(CAMERA_STATE_KEY, {
+            latitude,
+            longitude,
+            zoom: Number.isFinite(zoom) ? zoom : NA_VIEW.zoom,
+            pitch: Number.isFinite(pitch) ? pitch : NA_VIEW.pitch,
+            bearing: Number.isFinite(bearing) ? bearing : NA_VIEW.bearing,
+            savedAt: Date.now()
+          });
+        }
+
+        function restoreCameraState() {
+          const saved = loadObject(CAMERA_STATE_KEY, null);
+          if (!saved) return false;
+          const latitude = Number(saved.latitude);
+          const longitude = Number(saved.longitude);
+          const zoom = Number(saved.zoom);
+          const pitch = Number(saved.pitch);
+          const bearing = Number(saved.bearing);
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
+          store.dispatch(KeplerGl.updateMap({
+            latitude,
+            longitude,
+            zoom: Number.isFinite(zoom) ? zoom : NA_VIEW.zoom,
+            pitch: Number.isFinite(pitch) ? pitch : NA_VIEW.pitch,
+            bearing: Number.isFinite(bearing) ? bearing : NA_VIEW.bearing
+          }));
+          return true;
+        }
+
+        function rowsToDataset(rows) {
+          const fields = FIELD_ORDER.map((name) => ({ name, type: FIELD_TYPES[name] || "string", format: "" }));
+          const dataRows = rows.map((row) => {
+            const statusCode = Number(row.status_code);
+            const mapped = { ...row, size_code: statusCode >= 1 ? 2 : 1 };
+            return FIELD_ORDER.map((key) => (mapped[key] === undefined ? null : mapped[key]));
+          });
+          return { info: { id: DATASET_ID, label: "Live Site Status" }, data: { fields, rows: dataRows } };
+        }
+
+        function updateStoreState(rows, runMs) {
+          rows.forEach((row) => {
+            const key = makeRowKey(row);
+            const statusCode = Number(row.status_code);
+            const prev = storeState[key] || {};
+            const next = {
+              store: row.store || "",
+              dc: row.dc_name || "",
+              state: row.State || "",
+              serverIp: row.server_ip || "",
+              status: statusCode,
+              lastSeenAt: runMs,
+              lastUpAt: prev.lastUpAt || null,
+              downSince: prev.downSince || null
+            };
+            if (statusCode === 0) {
+              next.lastUpAt = runMs;
+              next.downSince = null;
+            } else if (!prev.downSince) {
+              next.downSince = runMs;
+            }
+            storeState[key] = next;
+          });
+        }
+
+        function getOutageMinutes(key) {
+          const item = storeState[key];
+          if (!item || !item.downSince || item.status === 0) return 0;
+          return Math.max(0, (currentRunMs - Number(item.downSince)) / 60000);
+        }
+
+        function getLastUpMinutes(key) {
+          const item = storeState[key];
+          if (!item || !item.lastUpAt) return NaN;
+          return Math.max(0, (currentRunMs - Number(item.lastUpAt)) / 60000);
+        }
+
+        function computeChanges(rows) {
+          const changes = [];
+          const nextStatusSnapshot = {};
+          rows.forEach((row) => {
+            const key = makeRowKey(row);
+            const nextStatus = Number(row.status_code);
+            nextStatusSnapshot[key] = nextStatus;
+            const prevStatus = lastStatusSnapshot[key];
+            if (prevStatus === undefined || prevStatus === nextStatus) return;
+            changes.push({ key, prevStatus, nextStatus, row });
+          });
+          Object.keys(lastStatusSnapshot).forEach((k) => delete lastStatusSnapshot[k]);
+          Object.assign(lastStatusSnapshot, nextStatusSnapshot);
+          saveObject(LAST_STATUS_KEY, lastStatusSnapshot);
+          return changes;
+        }
+
+        function updateTrendSnapshots(rows, runMs) {
+          const statusByKey = {};
+          rows.forEach((row) => {
+            statusByKey[makeRowKey(row)] = Number(row.status_code);
+          });
+          trendSnapshots.push({ timestamp: runMs, statusByKey });
+          while (trendSnapshots.length > MAX_TREND_RUNS) trendSnapshots.shift();
+        }
+
+        function calculateTrendSeries() {
+          const scope = controls.trendScope.value;
+          const since = Date.now() - 24 * 60 * 60 * 1000;
+          const rows = trendSnapshots.filter((item) => item.timestamp >= since);
+          if (!rows.length) return { label: "No history yet", values: [] };
+
+          if (scope === "store") {
+            if (!selectedKey) return { label: "Select a store", values: [] };
+            return {
+              label: `Store ${selectedRow ? selectedRow.store : ""}`,
+              values: rows.map((snap) => {
+                const s = snap.statusByKey[selectedKey];
+                return s === undefined ? null : s === 0 ? 100 : 0;
+              })
+            };
+          }
+
+          if (scope === "dc") {
+            const dcFilter = controls.dc.value;
+            const dcTarget = dcFilter !== "all" ? dcFilter : selectedRow ? selectedRow.dc_name || "" : "";
+            if (!dcTarget) return { label: "Select a DC", values: [] };
+            const dcKeySet = Object.keys(storeState).filter((k) => (storeState[k].dc || "") === dcTarget);
+            return {
+              label: `DC ${dcTarget}`,
+              values: rows.map((snap) => {
+                let total = 0;
+                let online = 0;
+                dcKeySet.forEach((k) => {
+                  const s = snap.statusByKey[k];
+                  if (s === undefined) return;
+                  total += 1;
+                  if (s === 0) online += 1;
+                });
+                if (!total) return null;
+                return (online / total) * 100;
+              })
+            };
+          }
+
+          return {
+            label: "Global",
+            values: rows.map((snap) => {
+              const values = Object.values(snap.statusByKey);
+              if (!values.length) return null;
+              const online = values.filter((v) => v === 0).length;
+              return (online / values.length) * 100;
+            })
+          };
+        }
+
+        function drawTrend() {
+          const canvas = document.getElementById("trend-canvas");
+          const ctx = canvas.getContext("2d");
+          const result = calculateTrendSeries();
+          const values = result.values.filter((v) => v !== null && Number.isFinite(v));
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "rgba(255,255,255,0.05)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          if (!values.length) {
+            ctx.fillStyle = "rgba(255,255,255,0.65)";
+            ctx.font = "11px sans-serif";
+            ctx.fillText("No data for trend scope", 8, 40);
+            document.getElementById("trend-caption").textContent = result.label;
+            document.getElementById("trend-note").textContent = "";
+            return;
+          }
+
+          const drawValues = result.values.map((v) => (v === null ? null : Math.max(0, Math.min(100, v))));
+          ctx.strokeStyle = "rgba(255,255,255,0.18)";
+          ctx.beginPath();
+          ctx.moveTo(0, 10); ctx.lineTo(canvas.width, 10);
+          ctx.moveTo(0, canvas.height - 10); ctx.lineTo(canvas.width, canvas.height - 10);
+          ctx.stroke();
+
+          ctx.strokeStyle = "#6ec1ff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          let started = false;
+          drawValues.forEach((v, i) => {
+            if (v === null) return;
+            const x = (i / Math.max(drawValues.length - 1, 1)) * (canvas.width - 10) + 5;
+            const y = canvas.height - 10 - (v / 100) * (canvas.height - 20);
+            if (!started) { ctx.moveTo(x, y); started = true; }
+            else { ctx.lineTo(x, y); }
+          });
+          ctx.stroke();
+
+          const latest = values[values.length - 1];
+          document.getElementById("trend-caption").textContent = result.label;
+          document.getElementById("trend-note").textContent = `Latest uptime ${latest.toFixed(1)}% â€¢ ${values.length} points`;
+        }
+
+        function setPanelState(panelId, collapsed) {
+          const panel = document.getElementById(panelId);
+          if (!panel) return;
+          panel.classList.toggle("collapsed", collapsed);
+          const header = panel.querySelector(".panel-header");
+          if (header) header.setAttribute("aria-expanded", String(!collapsed));
+        }
+
+        function initializeCollapsiblePanels() {
+          const defaults = { "offline-panel": true, "ops-panel": true };
+          const saved = loadObject(PANEL_STATE_KEY, defaults);
+          Object.keys(defaults).forEach((panelId) => {
+            const panel = document.getElementById(panelId);
+            const header = panel ? panel.querySelector(".panel-header") : null;
+            if (!panel || !header) return;
+            const initialCollapsed = saved[panelId] === undefined ? defaults[panelId] : Boolean(saved[panelId]);
+            setPanelState(panelId, initialCollapsed);
+            function toggle(event) {
+              if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              const isCollapsed = panel.classList.toggle("collapsed");
+              header.setAttribute("aria-expanded", String(!isCollapsed));
+              saved[panelId] = isCollapsed;
+              saveObject(PANEL_STATE_KEY, saved);
+            }
+            header.addEventListener("click", toggle);
+            header.addEventListener("keydown", toggle);
+          });
+        }
+
+        function populateFilterOptions(rows) {
+          const dcValues = Array.from(new Set(rows.map((r) => (r.dc_name || "").trim()).filter(Boolean))).sort();
+          const stateValues = Array.from(new Set(rows.map((r) => (r.State || "").trim()).filter(Boolean))).sort();
+          function repopulate(selectEl, values, allLabel) {
+            const prev = selectEl.value;
+            const opts = [`<option value=\"all\">${allLabel}</option>`].concat(values.map((v) => `<option value=\"${escapeHtml(v)}\">${escapeHtml(v)}</option>`));
+            selectEl.innerHTML = opts.join("");
+            if (values.includes(prev)) selectEl.value = prev;
+          }
+          repopulate(controls.dc, dcValues, "All DCs");
+          repopulate(controls.state, stateValues, "All States");
+        }
+
+        function passFilters(row) {
+          const status = Number(row.status_code);
+          const statusFilter = controls.status.value;
+          const dcFilter = controls.dc.value;
+          const stateFilter = controls.state.value;
+          const offlineOnly = controls.offlineOnly.checked;
+          const query = controls.search.value.trim().toLowerCase();
+
+          if (offlineOnly && status === 0) return false;
+          if (statusFilter === "green" && status !== 0) return false;
+          if (statusFilter === "yellow" && status !== 1) return false;
+          if (statusFilter === "red" && status !== 2) return false;
+          if (statusFilter === "offline" && !(status === 1 || status === 2)) return false;
+          if (dcFilter !== "all" && (row.dc_name || "") !== dcFilter) return false;
+          if (stateFilter !== "all" && (row.State || "") !== stateFilter) return false;
+
+          if (query) {
+            const haystack = [row.store, row.server_ip, row.gateway_ip, row.dc_name, row.City, row.State, row.Address, row.ZIP]
+              .map((x) => (x || "").toString().toLowerCase())
+              .join(" ");
+            if (!haystack.includes(query)) return false;
+          }
+          return true;
+        }
+
+        function updateSummaryMetrics(rawRows, shownRows) {
+          const total = rawRows.length;
+          const online = rawRows.filter((r) => Number(r.status_code) === 0).length;
+          const yellow = rawRows.filter((r) => Number(r.status_code) === 1).length;
+          const red = rawRows.filter((r) => Number(r.status_code) === 2).length;
+          const healthy = total ? ((online / total) * 100).toFixed(1) : "0.0";
+          document.getElementById("metric-total").textContent = String(total);
+          document.getElementById("metric-online").textContent = String(online);
+          document.getElementById("metric-yellow").textContent = String(yellow);
+          document.getElementById("metric-red").textContent = String(red);
+          document.getElementById("metric-healthy").textContent = `${healthy}%`;
+          document.getElementById("metric-filtered").textContent = String(shownRows.length);
+        }
+
+        function updateKeplerData(rows) {
+          storeCoords = {};
+          rows.forEach((row) => {
+            storeCoords[makeRowKey(row)] = row;
+          });
+          store.dispatch(
+            KeplerGl.addDataToMap({
+              datasets: rowsToDataset(rows),
+              config: loadedConfig,
+              options: { centerMap: false, keepExistingConfig: true }
+            })
+          );
+        }
+
+        function flyToRow(row) {
+          const lat = Number(row.Latitude);
+          const lng = Number(row.Longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+          store.dispatch(KeplerGl.updateMap({ latitude: lat, longitude: lng, zoom: 8, pitch: 0, bearing: 0 }));
+          selectStore(row);
+        }
+
+        function renderChangedPanel() {
+          const panelContents = document.getElementById("changes-contents");
+          const relevantChanges = latestChanges.filter((change) => passFilters(change.row));
+          if (!relevantChanges.length) {
+            panelContents.innerHTML = '<div class="tiny-muted">No status flips since the previous run.</div>';
+            return;
+          }
+          const html = relevantChanges
+            .sort((a, b) => Number(b.nextStatus) - Number(a.nextStatus))
+            .slice(0, 120)
+            .map((change) => {
+              const row = change.row;
+              const label = `${escapeHtml(row.dc_name || "Unknown")} - ${escapeHtml(row.store || "")}`;
+              const transition = `${escapeHtml(statusText(change.prevStatus))} â†’ ${escapeHtml(statusText(change.nextStatus))}`;
+              return `<div class=\"change-item\" data-store-key=\"${escapeHtml(change.key)}\">${label}<div class=\"tiny-muted\">${transition}</div></div>`;
+            })
+            .join("");
+          panelContents.innerHTML = html;
+          panelContents.querySelectorAll(".change-item[data-store-key]").forEach((el) => {
+            el.addEventListener("click", function () {
+              const key = this.getAttribute("data-store-key");
+              const item = latestChanges.find((ch) => ch.key === key);
+              if (!item) return;
+              flyToRow(item.row);
+            });
+          });
+        }
+
+        function renderOfflinePanel(rows) {
+          const panelContents = document.getElementById("offline-contents");
+          const offline = rows.filter((row) => {
+            const code = Number(row.status_code);
+            return code === 1 || code === 2;
+          });
+          const groups = { red: [], yellow: [] };
+          offline.forEach((row) => {
+            const key = makeRowKey(row);
+            const item = {
+              store: row.store ? String(row.store) : "",
+              dc: row.dc_name || "Unknown",
+              key,
+              row,
+              outage: getOutageMinutes(key),
+              lastUp: getLastUpMinutes(key)
+            };
+            if (Number(row.status_code) === 2) groups.red.push(item);
+            if (Number(row.status_code) === 1) groups.yellow.push(item);
+          });
+
+          function sortOffline(a, b) {
+            if (b.outage !== a.outage) return b.outage - a.outage;
+            const an = Number(a.store);
+            const bn = Number(b.store);
+            if (!Number.isNaN(an) && !Number.isNaN(bn)) return an - bn;
+            return String(a.store).localeCompare(String(b.store));
+          }
+          groups.red.sort(sortOffline);
+          groups.yellow.sort(sortOffline);
+
+          function renderGroup(label, cssClass, items) {
+            const itemHtml = items.map((item) => {
+              const top = `${escapeHtml(item.dc)} - ${escapeHtml(item.store)}`;
+              const ageText = `down ${formatMinutes(item.outage)} â€¢ last up ${Number.isFinite(item.lastUp) ? `${formatMinutes(item.lastUp)} ago` : "n/a"}`;
+              return `<div class=\"offline-item\" data-store-key=\"${escapeHtml(item.key)}\">${top}<div class=\"tiny-muted\">${ageText}</div></div>`;
+            }).join("");
+            return `<div class=\"offline-group ${cssClass}\"><div><span class=\"offline-badge\"></span><strong>${label}</strong><span class=\"offline-count\">(${items.length})</span></div>${itemHtml}</div>`;
+          }
+
+          if (!offline.length) {
+            panelContents.innerHTML = '<div class="tiny-muted">No offline stores in current filter.</div>';
+            return;
+          }
+
+          panelContents.innerHTML = renderGroup("Gateway Down", "status-red", groups.red) + renderGroup("Gateway Up", "status-yellow", groups.yellow);
+          panelContents.querySelectorAll(".offline-item[data-store-key]").forEach((el) => {
+            el.addEventListener("click", function () {
+              const key = this.getAttribute("data-store-key");
+              const row = storeCoords[key];
+              if (!row) return;
+              flyToRow(row);
+            });
+          });
+        }
+
+        function selectStore(row) {
+          selectedRow = row;
+          selectedKey = row ? makeRowKey(row) : null;
+          const details = document.getElementById("selected-store-details");
+          const statusEl = document.getElementById("actions-status");
+          const actionButtons = [
+            document.getElementById("btn-copy-store"),
+            document.getElementById("btn-copy-ip"),
+            document.getElementById("btn-copy-ping"),
+            document.getElementById("btn-copy-trace")
+          ];
+
+          if (!row) {
+            details.textContent = "Use offline/changed rows to select a store.";
+            statusEl.textContent = "";
+            actionButtons.forEach((b) => { b.disabled = true; });
+            drawTrend();
+            return;
+          }
+
+          actionButtons.forEach((b) => { b.disabled = false; });
+          const key = makeRowKey(row);
+          const outage = getOutageMinutes(key);
+          const lastUp = getLastUpMinutes(key);
+          details.innerHTML =
+            `<strong>${escapeHtml(row.dc_name || "Unknown")} - ${escapeHtml(row.store || "")}</strong><br>` +
+            `<span class=\"tiny-muted\">${escapeHtml(row.server_ip || "")} â€¢ ${escapeHtml(statusText(Number(row.status_code)))} â€¢ down ${formatMinutes(outage)} â€¢ last up ${Number.isFinite(lastUp) ? `${formatMinutes(lastUp)} ago` : "n/a"}</span>`;
+          statusEl.textContent = "";
+          drawTrend();
+        }
+
+        async function copyText(value, successText) {
+          try {
+            await navigator.clipboard.writeText(value);
+            document.getElementById("actions-status").textContent = successText;
+          } catch (_error) {
+            document.getElementById("actions-status").textContent = "Clipboard copy failed.";
+          }
+        }
+
+        function setupActionButtons() {
+          document.getElementById("btn-copy-store").addEventListener("click", function () {
+            if (!selectedRow) return;
+            copyText(String(selectedRow.store || ""), "Store copied.");
+          });
+          document.getElementById("btn-copy-ip").addEventListener("click", function () {
+            if (!selectedRow) return;
+            copyText(String(selectedRow.server_ip || ""), "Server IP copied.");
+          });
+          document.getElementById("btn-copy-ping").addEventListener("click", function () {
+            if (!selectedRow) return;
+            copyText(`ping -n 4 ${String(selectedRow.server_ip || "")}`, "Ping command copied.");
+          });
+          document.getElementById("btn-copy-trace").addEventListener("click", function () {
+            if (!selectedRow) return;
+            copyText(`tracert ${String(selectedRow.server_ip || "")}`, "Trace command copied.");
+          });
+        }
+
+        function refreshFilteredView() {
+          filteredRows = latestRows.filter(passFilters);
+          updateKeplerData(filteredRows);
+          updateSummaryMetrics(latestRows, filteredRows);
+          renderOfflinePanel(filteredRows);
+          renderChangedPanel();
+          drawTrend();
+        }
+
+        function setupFilterHandlers() {
+          const rerender = function () { refreshFilteredView(); };
+          controls.search.addEventListener("input", rerender);
+          controls.status.addEventListener("change", rerender);
+          controls.dc.addEventListener("change", rerender);
+          controls.state.addEventListener("change", rerender);
+          controls.offlineOnly.addEventListener("change", rerender);
+          controls.trendScope.addEventListener("change", rerender);
+          controls.clear.addEventListener("click", function () {
+            controls.search.value = "";
+            controls.status.value = "all";
+            controls.dc.value = "all";
+            controls.state.value = "all";
+            controls.offlineOnly.checked = false;
+            refreshFilteredView();
+          });
+        }
+
+        function populateFilterOptions(rows) {
+          const dcValues = Array.from(new Set(rows.map((r) => (r.dc_name || "").trim()).filter(Boolean))).sort();
+          const stateValues = Array.from(new Set(rows.map((r) => (r.State || "").trim()).filter(Boolean))).sort();
+          function repopulate(selectEl, values, allLabel) {
+            const prev = selectEl.value;
+            const opts = [`<option value=\"all\">${allLabel}</option>`].concat(values.map((v) => `<option value=\"${escapeHtml(v)}\">${escapeHtml(v)}</option>`));
+            selectEl.innerHTML = opts.join("");
+            if (values.includes(prev)) selectEl.value = prev;
+          }
+          repopulate(controls.dc, dcValues, "All DCs");
+          repopulate(controls.state, stateValues, "All States");
+        }
+
+        async function refreshData() {
+          try {
+            const response = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const rowsRaw = await response.json();
+            const rows = (rowsRaw || []).filter((row) => {
+              const lat = Number(row.Latitude);
+              const lon = Number(row.Longitude);
+              return Number.isFinite(lat) && Number.isFinite(lon);
+            });
+
+            currentRunMs = rows.length ? parseTimestamp(rows[0].timestamp).getTime() : Date.now();
+            updateStoreState(rows, currentRunMs);
+            latestChanges = computeChanges(rows);
+            updateTrendSnapshots(rows, currentRunMs);
+            latestRows = rows;
+
+            populateFilterOptions(rows);
+            refreshFilteredView();
+
+            const timestamp = rows.length ? rows[0].timestamp : Date.now();
+            document.getElementById("timestamp-display").textContent = `Time of event EST: ${formatTopTimestamp(timestamp)}`;
+            saveObject(STORE_STATE_KEY, storeState);
+          } catch (error) {
+            console.error("Refresh failed:", error);
+          }
+        }
+
+        document.getElementById("reset-view-btn").addEventListener("click", function (event) {
+          event.preventDefault();
+          store.dispatch(KeplerGl.updateMap(NA_VIEW));
+        });
+
+        initializeCollapsiblePanels();
+        setupFilterHandlers();
+        setupActionButtons();
+        window.setTimeout(function () {
+          if (!restoreCameraState()) {
+            store.dispatch(KeplerGl.updateMap(NA_VIEW));
+          }
+        }, 250);
+        const mapStateSaver = function () { saveCameraState(); };
+        store.subscribe(mapStateSaver);
+        window.addEventListener("beforeunload", saveCameraState);
+        window.setTimeout(refreshData, 500);
+        window.setInterval(refreshData, POLL_MS);
+      })();
+    </script>
+  </body>
+</html>
+

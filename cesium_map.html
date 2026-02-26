@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apollo - Cesium</title>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+    <style>
+      html,
+      body,
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      }
+
+      .glass {
+        background: rgba(0, 0, 0, 0.62);
+        color: #fff;
+        border-radius: 6px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      }
+
+      #timestamp-display {
+        position: fixed;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10002;
+        background: rgba(0, 0, 0, 0.82);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 4px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      #left-stack {
+        position: fixed;
+        top: 56px;
+        left: 12px;
+        z-index: 10002;
+        width: 340px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .panel {
+        padding: 10px;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 8px;
+      }
+
+      .panel-title {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .arrow {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 14px;
+        width: 12px;
+        height: 12px;
+        margin-left: 8px;
+        transition: transform 0.18s ease;
+        overflow: visible;
+        line-height: 0;
+        opacity: 0.95;
+      }
+
+      .arrow::before {
+        content: "";
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 7px solid #fff;
+      }
+
+      .collapsed .arrow {
+        transform: rotate(-90deg);
+      }
+
+      .collapsible-content {
+        overflow-y: auto;
+        transition: max-height 0.22s ease, padding 0.18s ease;
+        max-height: 72vh;
+        padding-right: 4px;
+      }
+
+      .collapsed .collapsible-content {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+
+      .section {
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: 0;
+      }
+
+      .section-title {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .metric {
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        text-align: center;
+        padding: 6px 4px;
+      }
+
+      .metric .label {
+        font-size: 10px;
+        opacity: 0.8;
+      }
+
+      .metric .value {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .controls-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .controls-grid .full {
+        grid-column: 1 / -1;
+      }
+
+      .control-label {
+        display: block;
+        font-size: 11px;
+        opacity: 0.85;
+        margin-bottom: 4px;
+      }
+
+      .control-input,
+      .control-select {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        padding: 7px 8px;
+        font-size: 12px;
+      }
+
+      .control-select option {
+        color: #111;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+        font-size: 12px;
+      }
+
+      .action-btn {
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .actions-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .offline-group {
+        margin-bottom: 8px;
+      }
+
+      .offline-badge {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      .status-red .offline-badge { background: #d50000; }
+      .status-yellow .offline-badge { background: #ffd600; }
+
+      .offline-item,
+      .change-item {
+        font-size: 12px;
+        margin: 3px 0;
+        line-height: 1.3;
+      }
+
+      .offline-item[data-store-key],
+      .change-item[data-store-key] {
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 3px;
+        transition: background-color 0.15s ease;
+      }
+
+      .offline-item[data-store-key]:hover,
+      .change-item[data-store-key]:hover {
+        background-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .offline-count {
+        font-weight: 700;
+        margin-left: 6px;
+      }
+
+      .tiny-muted {
+        opacity: 0.75;
+        font-size: 11px;
+      }
+
+      #trend-canvas {
+        width: 310px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 4px;
+      }
+
+      #reset-view-btn {
+        position: fixed;
+        bottom: 12px;
+        left: 12px;
+        z-index: 10002;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 14px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      #legend {
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        z-index: 10002;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 4px;
+        padding: 8px 10px;
+        color: #fff;
+        font-size: 12px;
+      }
+
+      #legend .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 3px 0;
+      }
+
+      #legend .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+      }
+
+      .ok { color: #00c853; }
+      .warn { color: #ffd600; }
+      .bad { color: #ff5252; }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer"></div>
+    <div id="timestamp-display">Time of event EST: Loading...</div>
+
+    <div id="left-stack">
+      <div id="offline-panel" class="panel glass collapsed" aria-live="polite">
+        <div class="panel-header" role="button" aria-expanded="false" tabindex="0">
+          <div class="panel-title">Offline Stores</div>
+          <div><span class="arrow" aria-hidden="true"></span></div>
+        </div>
+        <div id="offline-contents" class="collapsible-content">
+          <div class="tiny-muted">Loading...</div>
+        </div>
+      </div>
+
+      <div id="ops-panel" class="panel glass collapsed" aria-live="polite">
+        <div class="panel-header" role="button" aria-expanded="false" tabindex="0">
+          <div class="panel-title">Operations Menu</div>
+          <div><span class="arrow" aria-hidden="true"></span></div>
+        </div>
+
+        <div class="collapsible-content">
+          <div class="section">
+            <div class="section-title">Overall Stats</div>
+            <div class="metrics-grid">
+              <div class="metric"><div class="label">Total</div><div class="value" id="metric-total">0</div></div>
+              <div class="metric"><div class="label">Online</div><div class="value ok" id="metric-online">0</div></div>
+              <div class="metric"><div class="label">Gateway Up</div><div class="value warn" id="metric-yellow">0</div></div>
+              <div class="metric"><div class="label">Gateway Down</div><div class="value bad" id="metric-red">0</div></div>
+              <div class="metric"><div class="label">Healthy %</div><div class="value" id="metric-healthy">0%</div></div>
+              <div class="metric"><div class="label">Filtered</div><div class="value" id="metric-filtered">0</div></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Filtering</div>
+            <div class="controls-grid">
+              <div class="full">
+                <label class="control-label" for="search-input">Search (store, IP, city, address)</label>
+                <input id="search-input" class="control-input" type="text" placeholder="Type to filter..." />
+              </div>
+              <div>
+                <label class="control-label" for="status-filter">Status</label>
+                <select id="status-filter" class="control-select">
+                  <option value="all">All</option><option value="green">Online</option><option value="yellow">Gateway Up</option>
+                  <option value="red">Gateway Down</option><option value="offline">Offline Only</option>
+                </select>
+              </div>
+              <div>
+                <label class="control-label" for="dc-filter">DC</label>
+                <select id="dc-filter" class="control-select"><option value="all">All DCs</option></select>
+              </div>
+              <div>
+                <label class="control-label" for="state-filter">State</label>
+                <select id="state-filter" class="control-select"><option value="all">All States</option></select>
+              </div>
+              <div>
+                <label class="control-label" for="trend-scope">Trend Scope</label>
+                <select id="trend-scope" class="control-select">
+                  <option value="global">Global</option><option value="dc">Current DC</option><option value="store">Selected Store</option>
+                </select>
+              </div>
+              <div class="full toggle-row">
+                <input id="offline-only" type="checkbox" />
+                <label for="offline-only">Offline only</label>
+                <button id="clear-filters" class="action-btn" style="margin-left:auto">Clear Filters</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Changed Since Last Run</div>
+            <div id="changes-contents"><div class="tiny-muted">Loading...</div></div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Selected Store Actions</div>
+            <div id="selected-store-details" class="tiny-muted" style="margin-bottom:8px">Click a map marker, offline row, or changed row.</div>
+            <div class="actions-buttons">
+              <button id="btn-copy-store" class="action-btn" disabled>Copy Store</button>
+              <button id="btn-copy-ip" class="action-btn" disabled>Copy Server IP</button>
+              <button id="btn-copy-ping" class="action-btn" disabled>Copy Ping Cmd</button>
+              <button id="btn-copy-trace" class="action-btn" disabled>Copy Trace Cmd</button>
+            </div>
+            <div id="actions-status" class="tiny-muted" style="margin-top:8px"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">24h Uptime Trend</div>
+            <canvas id="trend-canvas" width="310" height="70"></canvas>
+            <div id="trend-caption" class="tiny-muted" style="margin-top:6px">Global</div>
+            <div id="trend-note" class="tiny-muted"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="reset-view-btn" title="Reset map to North America overview">↑ Reset View</button>
+
+    <div id="legend">
+      <div class="row"><span class="dot" style="background:#00c853"></span><span>Online</span></div>
+      <div class="row"><span class="dot" style="background:#ffd600"></span><span>Gateway Up</span></div>
+      <div class="row"><span class="dot" style="background:#d50000"></span><span>Gateway Down</span></div>
+    </div>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js"></script>
+    <script>
+      (function () {
+        const DATA_URL = "./sample_data/map_status_sample.json";
+        const DEFAULT_POLL_MS = 30 * 1000;
+        const MAX_TREND_RUNS = 160;
+        const PANEL_STATE_KEY = "cesiumPanelCollapsed_v3";
+        const STORE_STATE_KEY = "cesiumStoreState_v2";
+        const LAST_STATUS_KEY = "cesiumLastStatus_v2";
+        const CAMERA_STATE_KEY = "cesiumCameraState_v1";
+
+        function parsePollMsFromUrl() {
+          try {
+            const params = new URLSearchParams(window.location.search || "");
+            const pollSecRaw = params.get("pollSec");
+            const pollMsRaw = params.get("pollMs");
+            if (pollSecRaw != null) {
+              const sec = Number(pollSecRaw);
+              if (Number.isFinite(sec) && sec >= 5) return Math.round(sec * 1000);
+            }
+            if (pollMsRaw != null) {
+              const ms = Number(pollMsRaw);
+              if (Number.isFinite(ms) && ms >= 5000) return Math.round(ms);
+            }
+          } catch (_error) {}
+          return DEFAULT_POLL_MS;
+        }
+
+        const POLL_MS = parsePollMsFromUrl();
+
+        const NA_VIEW = {
+          destination: Cesium.Cartesian3.fromDegrees(-100.0, 45.0, 6200000),
+          orientation: { heading: 0.0, pitch: Cesium.Math.toRadians(-65), roll: 0.0 }
+        };
+
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+          animation: false,
+          timeline: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          navigationHelpButton: false,
+          selectionIndicator: true,
+          baseLayerPicker: true,
+          terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+          imageryProvider: new Cesium.OpenStreetMapImageryProvider({ url: "https://tile.openstreetmap.org/" })
+        });
+
+        const cameraController = viewer.scene.screenSpaceCameraController;
+        cameraController.maximumZoomDistance = 7000000;
+        cameraController.minimumZoomDistance = 20000;
+        cameraController.enableLook = false;
+        viewer.scene.camera.constrainedAxis = Cesium.Cartesian3.UNIT_Z;
+        viewer.scene.globe.enableLighting = true;
+        viewer.scene.skyAtmosphere.show = true;
+        viewer.scene.globe.depthTestAgainstTerrain = false;
+
+        const controls = {
+          search: document.getElementById("search-input"),
+          status: document.getElementById("status-filter"),
+          dc: document.getElementById("dc-filter"),
+          state: document.getElementById("state-filter"),
+          offlineOnly: document.getElementById("offline-only"),
+          clear: document.getElementById("clear-filters"),
+          trendScope: document.getElementById("trend-scope")
+        };
+
+        let storeCoords = {};
+        let latestRows = [];
+        let filteredRows = [];
+        let latestChanges = [];
+        let selectedKey = null;
+        let selectedRow = null;
+        let currentRunMs = Date.now();
+        const trendSnapshots = [];
+        const storeState = loadObject(STORE_STATE_KEY, {});
+        const lastStatusSnapshot = loadObject(LAST_STATUS_KEY, {});
+
+        function loadObject(key, fallback) {
+          try {
+            const parsed = JSON.parse(localStorage.getItem(key) || "null");
+            if (parsed && typeof parsed === "object") return parsed;
+          } catch (_error) {}
+          return fallback;
+        }
+
+        function saveObject(key, value) {
+          try { localStorage.setItem(key, JSON.stringify(value)); } catch (_error) {}
+        }
+
+        function saveCameraState() {
+          try {
+            const cartographic = viewer.camera.positionCartographic;
+            if (!cartographic) return;
+            saveObject(CAMERA_STATE_KEY, {
+              lon: Cesium.Math.toDegrees(cartographic.longitude),
+              lat: Cesium.Math.toDegrees(cartographic.latitude),
+              height: cartographic.height,
+              heading: viewer.camera.heading,
+              pitch: viewer.camera.pitch,
+              roll: viewer.camera.roll,
+              savedAt: Date.now()
+            });
+          } catch (_error) {}
+        }
+
+        function restoreCameraState() {
+          const saved = loadObject(CAMERA_STATE_KEY, null);
+          if (!saved) return false;
+          const lon = Number(saved.lon);
+          const lat = Number(saved.lat);
+          const height = Number(saved.height);
+          const heading = Number(saved.heading);
+          const pitch = Number(saved.pitch);
+          const roll = Number(saved.roll);
+          if (!Number.isFinite(lon) || !Number.isFinite(lat) || !Number.isFinite(height)) return false;
+          viewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat, Math.max(1500, height)),
+            orientation: {
+              heading: Number.isFinite(heading) ? heading : 0,
+              pitch: Number.isFinite(pitch) ? pitch : Cesium.Math.toRadians(-65),
+              roll: Number.isFinite(roll) ? roll : 0
+            }
+          });
+          return true;
+        }
+
+        function makeRowKey(row) {
+          const store = row && row.store ? String(row.store).trim() : "";
+          const dcCode = row && row.dc_code ? String(row.dc_code).trim() : "";
+          const serverIp = row && row.server_ip ? String(row.server_ip).trim() : "";
+          return `${store}|${dcCode}|${serverIp}`;
+        }
+
+        function parseTimestamp(value) {
+          if (!value) return new Date();
+          const asText = String(value);
+          if (/^\d{10,13}$/.test(asText)) {
+            const ms = asText.length === 13 ? Number(asText) : Number(asText) * 1000;
+            return new Date(ms);
+          }
+          const parsed = new Date(asText);
+          return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+        }
+
+        function formatTopTimestamp(value) {
+          const dateObj = parseTimestamp(value);
+          const dayName = dateObj.toLocaleString("en-US", { weekday: "long" });
+          const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+          const day = String(dateObj.getDate()).padStart(2, "0");
+          const year = dateObj.getFullYear();
+          const time = dateObj.toLocaleString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true });
+          return `${dayName} ${month}/${day}/${year} ${time}`;
+        }
+
+        function formatMinutes(value) {
+          if (!Number.isFinite(value) || value < 0) return "-";
+          if (value < 60) return `${Math.round(value)}m`;
+          const hrs = Math.floor(value / 60);
+          const mins = Math.round(value % 60);
+          return `${hrs}h ${mins}m`;
+        }
+
+        function escapeHtml(value) {
+          return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+        }
+
+        function statusColor(statusCode) {
+          if (statusCode === 2) return Cesium.Color.fromCssColorString("#d50000");
+          if (statusCode === 1) return Cesium.Color.fromCssColorString("#ffd600");
+          if (statusCode === 0) return Cesium.Color.fromCssColorString("#00c853");
+          return Cesium.Color.LIGHTGRAY;
+        }
+
+        function statusText(statusCode) {
+          if (statusCode === 2) return "Gateway Down";
+          if (statusCode === 1) return "Gateway Up";
+          if (statusCode === 0) return "Online";
+          return "Unknown";
+        }
+
+        function updateStoreState(rows, runMs) {
+          rows.forEach((row) => {
+            const key = makeRowKey(row);
+            const statusCode = Number(row.status_code);
+            const prev = storeState[key] || {};
+            const next = { store: row.store || "", dc: row.dc_name || "", state: row.State || "", serverIp: row.server_ip || "", status: statusCode, lastSeenAt: runMs, lastUpAt: prev.lastUpAt || null, downSince: prev.downSince || null };
+            if (statusCode === 0) { next.lastUpAt = runMs; next.downSince = null; }
+            else if (!prev.downSince) next.downSince = runMs;
+            storeState[key] = next;
+          });
+        }
+
+        function getOutageMinutes(key) {
+          const item = storeState[key];
+          if (!item || !item.downSince || item.status === 0) return 0;
+          return Math.max(0, (currentRunMs - Number(item.downSince)) / 60000);
+        }
+
+        function getLastUpMinutes(key) {
+          const item = storeState[key];
+          if (!item || !item.lastUpAt) return NaN;
+          return Math.max(0, (currentRunMs - Number(item.lastUpAt)) / 60000);
+        }
+
+        function buildDescription(row) {
+          const key = makeRowKey(row);
+          const outageMin = getOutageMinutes(key);
+          const lastUpMin = getLastUpMinutes(key);
+          const fields = [["Store", row.store],["DC", row.dc_name],["Server IP", row.server_ip],["Gateway IP", row.gateway_ip],["Status", statusText(Number(row.status_code))],["Outage", Number(row.status_code) >= 1 ? formatMinutes(outageMin) : "-"],["Last Up", Number.isFinite(lastUpMin) ? `${formatMinutes(lastUpMin)} ago` : "n/a"],["Address", row.Address],["City", row.City],["State", row.State],["ZIP", row.ZIP],["Timestamp", row.timestamp]];
+          const rowsHtml = fields.filter((pair) => pair[1] !== undefined && pair[1] !== null && String(pair[1]).trim() !== "").map((pair) => `<tr><td><strong>${escapeHtml(pair[0])}</strong></td><td>${escapeHtml(pair[1])}</td></tr>`).join("");
+          return `<table style=\"font-family:Arial,sans-serif;font-size:12px\">${rowsHtml}</table>`;
+        }
+
+        function computeChanges(rows) {
+          const changes = [];
+          const nextStatusSnapshot = {};
+          rows.forEach((row) => {
+            const key = makeRowKey(row);
+            const nextStatus = Number(row.status_code);
+            nextStatusSnapshot[key] = nextStatus;
+            const prevStatus = lastStatusSnapshot[key];
+            if (prevStatus === undefined || prevStatus === nextStatus) return;
+            changes.push({ key, prevStatus, nextStatus, row });
+          });
+          Object.keys(lastStatusSnapshot).forEach((k) => delete lastStatusSnapshot[k]);
+          Object.assign(lastStatusSnapshot, nextStatusSnapshot);
+          saveObject(LAST_STATUS_KEY, lastStatusSnapshot);
+          return changes;
+        }
+
+        function updateTrendSnapshots(rows, runMs) {
+          const statusByKey = {};
+          rows.forEach((row) => { statusByKey[makeRowKey(row)] = Number(row.status_code); });
+          trendSnapshots.push({ timestamp: runMs, statusByKey });
+          while (trendSnapshots.length > MAX_TREND_RUNS) trendSnapshots.shift();
+        }
+
+        function calculateTrendSeries() {
+          const scope = controls.trendScope.value;
+          const since = Date.now() - 24 * 60 * 60 * 1000;
+          const rows = trendSnapshots.filter((item) => item.timestamp >= since);
+          if (!rows.length) return { label: "No history yet", values: [] };
+          if (scope === "store") {
+            if (!selectedKey) return { label: "Select a store", values: [] };
+            return { label: `Store ${selectedRow ? selectedRow.store : ""}`, values: rows.map((snap) => { const s = snap.statusByKey[selectedKey]; return s === undefined ? null : s === 0 ? 100 : 0; }) };
+          }
+          if (scope === "dc") {
+            const dcFilter = controls.dc.value;
+            const dcTarget = dcFilter !== "all" ? dcFilter : selectedRow ? selectedRow.dc_name || "" : "";
+            if (!dcTarget) return { label: "Select a DC", values: [] };
+            const dcKeySet = Object.keys(storeState).filter((k) => (storeState[k].dc || "") === dcTarget);
+            return { label: `DC ${dcTarget}`, values: rows.map((snap) => { let total = 0; let online = 0; dcKeySet.forEach((k) => { const s = snap.statusByKey[k]; if (s === undefined) return; total += 1; if (s === 0) online += 1; }); if (!total) return null; return (online / total) * 100; }) };
+          }
+          return { label: "Global", values: rows.map((snap) => { const values = Object.values(snap.statusByKey); if (!values.length) return null; const online = values.filter((v) => v === 0).length; return (online / values.length) * 100; }) };
+        }
+
+        function drawTrend() {
+          const canvas = document.getElementById("trend-canvas");
+          const ctx = canvas.getContext("2d");
+          const result = calculateTrendSeries();
+          const values = result.values.filter((v) => v !== null && Number.isFinite(v));
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "rgba(255,255,255,0.05)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          if (!values.length) {
+            ctx.fillStyle = "rgba(255,255,255,0.65)";
+            ctx.font = "11px sans-serif";
+            ctx.fillText("No data for trend scope", 8, 40);
+            document.getElementById("trend-caption").textContent = result.label;
+            document.getElementById("trend-note").textContent = "";
+            return;
+          }
+          const drawValues = result.values.map((v) => (v === null ? null : Math.max(0, Math.min(100, v))));
+          ctx.strokeStyle = "rgba(255,255,255,0.18)";
+          ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(canvas.width, 10); ctx.moveTo(0, canvas.height - 10); ctx.lineTo(canvas.width, canvas.height - 10); ctx.stroke();
+          ctx.strokeStyle = "#6ec1ff"; ctx.lineWidth = 2; ctx.beginPath();
+          let started = false;
+          drawValues.forEach((v, i) => {
+            if (v === null) return;
+            const x = (i / Math.max(drawValues.length - 1, 1)) * (canvas.width - 10) + 5;
+            const y = canvas.height - 10 - (v / 100) * (canvas.height - 20);
+            if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+          });
+          ctx.stroke();
+          const latest = values[values.length - 1];
+          document.getElementById("trend-caption").textContent = result.label;
+          document.getElementById("trend-note").textContent = `Latest uptime ${latest.toFixed(1)}% • ${values.length} points`;
+        }
+
+        function setPanelState(panelId, collapsed) {
+          const panel = document.getElementById(panelId);
+          if (!panel) return;
+          panel.classList.toggle("collapsed", collapsed);
+          const header = panel.querySelector(".panel-header");
+          if (header) header.setAttribute("aria-expanded", String(!collapsed));
+        }
+
+        function initializeCollapsiblePanels() {
+          const defaults = { "offline-panel": true, "ops-panel": true };
+          const saved = loadObject(PANEL_STATE_KEY, defaults);
+          Object.keys(defaults).forEach((panelId) => {
+            const panel = document.getElementById(panelId);
+            const header = panel ? panel.querySelector(".panel-header") : null;
+            if (!panel || !header) return;
+            const initialCollapsed = saved[panelId] === undefined ? defaults[panelId] : Boolean(saved[panelId]);
+            setPanelState(panelId, initialCollapsed);
+            function toggle(event) {
+              if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              const isCollapsed = panel.classList.toggle("collapsed");
+              header.setAttribute("aria-expanded", String(!isCollapsed));
+              saved[panelId] = isCollapsed;
+              saveObject(PANEL_STATE_KEY, saved);
+            }
+            header.addEventListener("click", toggle);
+            header.addEventListener("keydown", toggle);
+          });
+        }
+
+        function populateFilterOptions(rows) {
+          const dcValues = Array.from(new Set(rows.map((r) => (r.dc_name || "").trim()).filter(Boolean))).sort();
+          const stateValues = Array.from(new Set(rows.map((r) => (r.State || "").trim()).filter(Boolean))).sort();
+          function repopulate(selectEl, values, allLabel) {
+            const prev = selectEl.value;
+            const opts = [`<option value=\"all\">${allLabel}</option>`].concat(values.map((v) => `<option value=\"${escapeHtml(v)}\">${escapeHtml(v)}</option>`));
+            selectEl.innerHTML = opts.join("");
+            if (values.includes(prev)) selectEl.value = prev;
+          }
+          repopulate(controls.dc, dcValues, "All DCs");
+          repopulate(controls.state, stateValues, "All States");
+        }
+
+        function passFilters(row) {
+          const status = Number(row.status_code);
+          const statusFilter = controls.status.value;
+          const dcFilter = controls.dc.value;
+          const stateFilter = controls.state.value;
+          const offlineOnly = controls.offlineOnly.checked;
+          const query = controls.search.value.trim().toLowerCase();
+          if (offlineOnly && status === 0) return false;
+          if (statusFilter === "green" && status !== 0) return false;
+          if (statusFilter === "yellow" && status !== 1) return false;
+          if (statusFilter === "red" && status !== 2) return false;
+          if (statusFilter === "offline" && !(status === 1 || status === 2)) return false;
+          if (dcFilter !== "all" && (row.dc_name || "") !== dcFilter) return false;
+          if (stateFilter !== "all" && (row.State || "") !== stateFilter) return false;
+          if (query) {
+            const haystack = [row.store,row.server_ip,row.gateway_ip,row.dc_name,row.City,row.State,row.Address,row.ZIP].map((x) => (x || "").toString().toLowerCase()).join(" ");
+            if (!haystack.includes(query)) return false;
+          }
+          return true;
+        }
+
+        function updateSummaryMetrics(rawRows, shownRows) {
+          const total = rawRows.length;
+          const online = rawRows.filter((r) => Number(r.status_code) === 0).length;
+          const yellow = rawRows.filter((r) => Number(r.status_code) === 1).length;
+          const red = rawRows.filter((r) => Number(r.status_code) === 2).length;
+          const healthy = total ? ((online / total) * 100).toFixed(1) : "0.0";
+          document.getElementById("metric-total").textContent = String(total);
+          document.getElementById("metric-online").textContent = String(online);
+          document.getElementById("metric-yellow").textContent = String(yellow);
+          document.getElementById("metric-red").textContent = String(red);
+          document.getElementById("metric-healthy").textContent = `${healthy}%`;
+          document.getElementById("metric-filtered").textContent = String(shownRows.length);
+        }
+
+        function flyToRow(row, selectEntityToo) {
+          const key = makeRowKey(row);
+          const target = storeCoords[key];
+          if (!target || !target.entity) return;
+          viewer.flyTo(target.entity, { offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-55), 1800000), duration: 1.3 });
+          if (selectEntityToo) viewer.selectedEntity = target.entity;
+          selectStore(row);
+        }
+
+        function renderChangedPanel() {
+          const panelContents = document.getElementById("changes-contents");
+          const relevantChanges = latestChanges.filter((change) => passFilters(change.row));
+          if (!relevantChanges.length) {
+            panelContents.innerHTML = '<div class="tiny-muted">No status flips since the previous run.</div>';
+            return;
+          }
+          panelContents.innerHTML = relevantChanges.sort((a, b) => Number(b.nextStatus) - Number(a.nextStatus)).slice(0, 120).map((change) => {
+            const row = change.row;
+            const label = `${escapeHtml(row.dc_name || "Unknown")} - ${escapeHtml(row.store || "")}`;
+            const transition = `${escapeHtml(statusText(change.prevStatus))} → ${escapeHtml(statusText(change.nextStatus))}`;
+            return `<div class=\"change-item\" data-store-key=\"${escapeHtml(change.key)}\">${label}<div class=\"tiny-muted\">${transition}</div></div>`;
+          }).join("");
+          panelContents.querySelectorAll(".change-item[data-store-key]").forEach((el) => {
+            el.addEventListener("click", function () {
+              const key = this.getAttribute("data-store-key");
+              const item = latestChanges.find((ch) => ch.key === key);
+              if (!item) return;
+              flyToRow(item.row, true);
+            });
+          });
+        }
+
+        function renderOfflinePanel(rows) {
+          const panelContents = document.getElementById("offline-contents");
+          const offline = rows.filter((row) => { const code = Number(row.status_code); return code === 1 || code === 2; });
+          const groups = { red: [], yellow: [] };
+          offline.forEach((row) => {
+            const key = makeRowKey(row);
+            const item = { store: row.store ? String(row.store) : "", dc: row.dc_name || "Unknown", key, row, outage: getOutageMinutes(key), lastUp: getLastUpMinutes(key) };
+            if (Number(row.status_code) === 2) groups.red.push(item);
+            if (Number(row.status_code) === 1) groups.yellow.push(item);
+          });
+          function sortOffline(a, b) {
+            if (b.outage !== a.outage) return b.outage - a.outage;
+            const an = Number(a.store); const bn = Number(b.store);
+            if (!Number.isNaN(an) && !Number.isNaN(bn)) return an - bn;
+            return String(a.store).localeCompare(String(b.store));
+          }
+          groups.red.sort(sortOffline); groups.yellow.sort(sortOffline);
+          function renderGroup(label, cssClass, items) {
+            const itemHtml = items.map((item) => {
+              const top = `${escapeHtml(item.dc)} - ${escapeHtml(item.store)}`;
+              const ageText = `down ${formatMinutes(item.outage)} • last up ${Number.isFinite(item.lastUp) ? `${formatMinutes(item.lastUp)} ago` : "n/a"}`;
+              return `<div class=\"offline-item\" data-store-key=\"${escapeHtml(item.key)}\">${top}<div class=\"tiny-muted\">${ageText}</div></div>`;
+            }).join("");
+            return `<div class=\"offline-group ${cssClass}\"><div><span class=\"offline-badge\"></span><strong>${label}</strong><span class=\"offline-count\">(${items.length})</span></div>${itemHtml}</div>`;
+          }
+          if (!offline.length) {
+            panelContents.innerHTML = '<div class="tiny-muted">No offline stores in current filter.</div>';
+            return;
+          }
+          panelContents.innerHTML = renderGroup("Gateway Down", "status-red", groups.red) + renderGroup("Gateway Up", "status-yellow", groups.yellow);
+          panelContents.querySelectorAll(".offline-item[data-store-key]").forEach((el) => {
+            el.addEventListener("click", function () {
+              const key = this.getAttribute("data-store-key");
+              const row = storeCoords[key] ? storeCoords[key].row : null;
+              if (!row) return;
+              flyToRow(row, true);
+            });
+          });
+        }
+
+        function selectStore(row) {
+          selectedRow = row;
+          selectedKey = row ? makeRowKey(row) : null;
+          const details = document.getElementById("selected-store-details");
+          const statusEl = document.getElementById("actions-status");
+          const actionButtons = [document.getElementById("btn-copy-store"),document.getElementById("btn-copy-ip"),document.getElementById("btn-copy-ping"),document.getElementById("btn-copy-trace")];
+          if (!row) {
+            details.textContent = "Click a map marker, offline row, or changed row.";
+            statusEl.textContent = "";
+            actionButtons.forEach((b) => { b.disabled = true; });
+            drawTrend();
+            return;
+          }
+          actionButtons.forEach((b) => { b.disabled = false; });
+          const key = makeRowKey(row);
+          const outage = getOutageMinutes(key);
+          const lastUp = getLastUpMinutes(key);
+          details.innerHTML = `<strong>${escapeHtml(row.dc_name || "Unknown")} - ${escapeHtml(row.store || "")}</strong><br><span class=\"tiny-muted\">${escapeHtml(row.server_ip || "")} • ${escapeHtml(statusText(Number(row.status_code)))} • down ${formatMinutes(outage)} • last up ${Number.isFinite(lastUp) ? `${formatMinutes(lastUp)} ago` : "n/a"}</span>`;
+          statusEl.textContent = "";
+          drawTrend();
+        }
+
+        async function copyText(value, successText) {
+          try { await navigator.clipboard.writeText(value); document.getElementById("actions-status").textContent = successText; }
+          catch (_error) { document.getElementById("actions-status").textContent = "Clipboard copy failed."; }
+        }
+
+        function setupActionButtons() {
+          document.getElementById("btn-copy-store").addEventListener("click", function () { if (!selectedRow) return; copyText(String(selectedRow.store || ""), "Store copied."); });
+          document.getElementById("btn-copy-ip").addEventListener("click", function () { if (!selectedRow) return; copyText(String(selectedRow.server_ip || ""), "Server IP copied."); });
+          document.getElementById("btn-copy-ping").addEventListener("click", function () { if (!selectedRow) return; copyText(`ping -n 4 ${String(selectedRow.server_ip || "")}`, "Ping command copied."); });
+          document.getElementById("btn-copy-trace").addEventListener("click", function () { if (!selectedRow) return; copyText(`tracert ${String(selectedRow.server_ip || "")}`, "Trace command copied."); });
+        }
+
+        function updateEntities(rows) {
+          viewer.entities.removeAll();
+          storeCoords = {};
+          rows.forEach((row) => {
+            const lat = Number(row.Latitude);
+            const lon = Number(row.Longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+            const statusCode = Number(row.status_code);
+            const color = statusColor(statusCode);
+            const key = makeRowKey(row);
+            const store = row.store ? String(row.store) : "Unknown";
+            const entity = viewer.entities.add({
+              id: `store-${key}`,
+              name: `Store ${store}`,
+              position: Cesium.Cartesian3.fromDegrees(lon, lat),
+              point: { pixelSize: statusCode >= 1 ? 12 : 8, color, outlineColor: Cesium.Color.BLACK, outlineWidth: 1, disableDepthTestDistance: Number.POSITIVE_INFINITY },
+              label: statusCode >= 1 ? { text: store, font: "12px sans-serif", style: Cesium.LabelStyle.FILL_AND_OUTLINE, fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK, outlineWidth: 2, verticalOrigin: Cesium.VerticalOrigin.BOTTOM, pixelOffset: new Cesium.Cartesian2(0, -14), disableDepthTestDistance: Number.POSITIVE_INFINITY } : undefined,
+              description: buildDescription(row),
+              properties: { rowKey: key }
+            });
+            if (statusCode >= 1) {
+              const outageBoost = Math.min(40000, getOutageMinutes(key) * 120);
+              viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(lon, lat, 45000),
+                cylinder: { length: (statusCode === 2 ? 90000 : 60000) + outageBoost, topRadius: 2500, bottomRadius: 2500, material: color.withAlpha(0.4), outline: false }
+              });
+            }
+            storeCoords[key] = { lat, lon, entity, row };
+          });
+        }
+
+        function refreshFilteredView() {
+          filteredRows = latestRows.filter(passFilters);
+          updateEntities(filteredRows);
+          updateSummaryMetrics(latestRows, filteredRows);
+          renderOfflinePanel(filteredRows);
+          renderChangedPanel();
+          drawTrend();
+        }
+
+        function setupFilterHandlers() {
+          const rerender = function () { refreshFilteredView(); };
+          controls.search.addEventListener("input", rerender);
+          controls.status.addEventListener("change", rerender);
+          controls.dc.addEventListener("change", rerender);
+          controls.state.addEventListener("change", rerender);
+          controls.offlineOnly.addEventListener("change", rerender);
+          controls.trendScope.addEventListener("change", rerender);
+          controls.clear.addEventListener("click", function () {
+            controls.search.value = ""; controls.status.value = "all"; controls.dc.value = "all"; controls.state.value = "all"; controls.offlineOnly.checked = false;
+            refreshFilteredView();
+          });
+        }
+
+        async function refreshData() {
+          try {
+            const response = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const rowsRaw = await response.json();
+            const rows = (rowsRaw || []).filter((row) => { const lat = Number(row.Latitude); const lon = Number(row.Longitude); return Number.isFinite(lat) && Number.isFinite(lon); });
+            currentRunMs = rows.length ? parseTimestamp(rows[0].timestamp).getTime() : Date.now();
+            updateStoreState(rows, currentRunMs);
+            latestChanges = computeChanges(rows);
+            updateTrendSnapshots(rows, currentRunMs);
+            latestRows = rows;
+            populateFilterOptions(rows);
+            refreshFilteredView();
+            const timestamp = rows.length ? rows[0].timestamp : Date.now();
+            document.getElementById("timestamp-display").textContent = `Time of event EST: ${formatTopTimestamp(timestamp)}`;
+            saveObject(STORE_STATE_KEY, storeState);
+          } catch (error) {
+            console.error("Map refresh failed", error);
+          }
+        }
+
+        document.getElementById("reset-view-btn").addEventListener("click", function (event) {
+          event.preventDefault();
+          viewer.camera.flyTo({ ...NA_VIEW, duration: 1.2 });
+        });
+
+        const clickHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        clickHandler.setInputAction(function (movement) {
+          const picked = viewer.scene.pick(movement.position);
+          if (!picked || !picked.id || !picked.id.properties || !picked.id.properties.rowKey) return;
+          const rowKeyProp = picked.id.properties.rowKey;
+          const key = typeof rowKeyProp.getValue === "function" ? rowKeyProp.getValue(Cesium.JulianDate.now()) : rowKeyProp;
+          const target = storeCoords[key];
+          if (!target) return;
+          viewer.selectedEntity = target.entity;
+          selectStore(target.row);
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+        initializeCollapsiblePanels();
+        setupFilterHandlers();
+        setupActionButtons();
+        viewer.camera.moveEnd.addEventListener(saveCameraState);
+        if (!restoreCameraState()) {
+          viewer.camera.flyTo({ ...NA_VIEW, duration: 0 });
+          window.setTimeout(saveCameraState, 250);
+        }
+        window.setTimeout(refreshData, 500);
+        window.setInterval(refreshData, POLL_MS);
+      })();
+    </script>
+  </body>
+</html>

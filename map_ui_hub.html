@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apollo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background: #0b0f14;
+        color: #f6f8fa;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      #app {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        width: 100%;
+        height: 100%;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: #111821;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      }
+
+      .title {
+        font-size: 13px;
+        font-weight: 600;
+        margin-right: 10px;
+        opacity: 0.9;
+      }
+
+      .tab {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: #1a2430;
+        color: #e6edf3;
+        padding: 7px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .tab:hover {
+        background: #202d3b;
+      }
+
+      .tab.active {
+        background: #243447;
+        border-color: rgba(255, 255, 255, 0.34);
+      }
+
+      .spacer {
+        flex: 1;
+      }
+
+      .status {
+        font-size: 12px;
+        opacity: 0.78;
+      }
+
+      #frame {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="toolbar">
+        <div class="title">Apollo</div>
+        <button class="tab" data-target="cesium_map.html">Cesium</button>
+        <button class="tab" data-target="maplibre_map.html">MapLibre</button>
+        <button class="tab" data-target="kepler_map.html">Kepler</button>
+        <div class="spacer"></div>
+        <div id="status" class="status">Loading Cesium...</div>
+      </div>
+      <iframe id="frame" title="Apollo"></iframe>
+    </div>
+
+    <script>
+      (function () {
+        const frame = document.getElementById("frame");
+        const status = document.getElementById("status");
+        const tabs = Array.from(document.querySelectorAll(".tab"));
+
+        const options = {
+          "cesium_map.html": "Cesium",
+          "maplibre_map.html": "MapLibre",
+          "kepler_map.html": "Kepler"
+        };
+
+        function setActive(target) {
+          tabs.forEach((tab) => {
+            tab.classList.toggle("active", tab.getAttribute("data-target") === target);
+          });
+          const label = options[target] || target;
+          status.textContent = `Viewing ${label}`;
+          frame.src = target;
+
+          const url = new URL(window.location.href);
+          url.searchParams.set("ui", target);
+          window.history.replaceState({}, "", url.toString());
+        }
+
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            const target = tab.getAttribute("data-target");
+            setActive(target);
+          });
+        });
+
+        const url = new URL(window.location.href);
+        const initial = url.searchParams.get("ui");
+        const safeInitial = options[initial] ? initial : "cesium_map.html";
+        setActive(safeInitial);
+      })();
+    </script>
+  </body>
+</html>

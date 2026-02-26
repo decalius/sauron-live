@@ -1,0 +1,21 @@
+name: Privacy Guard
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  privacy-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run privacy guard
+        run: python scripts/privacy_guard.py

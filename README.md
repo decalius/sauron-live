@@ -32,7 +32,8 @@
 ## What You're Looking At
 
 This repo contains:
-- **index.html** — Interactive geospatial dashboard showing site network health
+- **map_ui_hub.html** — Multi-map launcher (Cesium, MapLibre, Kepler)
+- **cesium_map.html / maplibre_map.html / kepler_map.html** — Public demo map UIs
 - **sample_data/map_status_sample.json** — Sample scan results (green ✓, yellow ⚠, red ✗ statuses)
 - **sauron.py** — Scanner tool (simplified demo version showing CLI interface)
 
@@ -55,7 +56,7 @@ Provide your own `sites.csv` and optional `DC_LIST.csv`.
 
 2. **Open your browser** to:
    ```
-   http://localhost:8000/index.html
+   http://localhost:8000/map_ui_hub.html
    ```
 
 3. **You should see:**
@@ -108,25 +109,37 @@ Optional (recommended):
 
 ## Update the Sample Data
 
-Replace `sample_data/map_status_sample.json` with your own scan results:
+Replace `sample_data/map_status_sample.json` with your own sanitized scan results:
 
 ```bash
-# Run a real scan in your environment
+# Run a real scan in your private environment
 python sauron.py your_sites.csv --gateway-check --output-dir ./logs
 
-# Copy the latest feed to the sample directory
-# Windows
-copy logs\map_status_latest.json sample_data\map_status_sample.json
-
-# Linux/macOS
-cp logs/map_status_latest.json sample_data/map_status_sample.json
+# Build a public-safe feed (redacts IPs/DC names/site ids/locations)
+# Windows / Linux / macOS
+python scripts/sanitize_public_feed.py --input logs/map_status_latest.json --output sample_data/map_status_sample.json --run-id public-demo
 
 # Reload the browser — dashboard updates automatically
 ```
 
+## Safe Public Release Workflow
+
+1. Run scanner in private environment only (`sites.csv`, `DC_LIST.csv`, `logs/` are not committed).
+2. Generate sanitized demo feed:
+   ```bash
+   python scripts/sanitize_public_feed.py
+   ```
+3. Validate no sensitive indicators before push:
+   ```bash
+   python scripts/privacy_guard.py
+   ```
+4. Commit only public assets (dashboard HTML, sample data, docs, GIFs/screenshots).
+
+GitHub Actions also runs the same privacy guard in `.github/workflows/privacy-guard.yml` on every push/PR.
+
 ## Modify Dashboard Styling
 
-Edit `index.html` to adjust:
+Edit `map_ui_hub.html` (launcher) and the individual map pages to adjust:
 - **Color scheme** — change RGB values for green/yellow/red markers
 - **Map center** — default view location (line ~450: `setCenter()`)
 - **Popup text** — site information display format
@@ -142,8 +155,8 @@ Format your JSON feed like `sample_data/map_status_sample.json`:
       "timestamp": "2026-02-09T12:00:00-05:00",
       "run_id": "demo-1",
       "site": "SITE-0001",
-      "dc_code": "NE1",
-      "dc_name": "North-East Warehouse",
+      "dc_code": "DC01",
+      "dc_name": "Region 01",
       "server_ip": "198.51.100.10",
       "gateway_ip": "198.51.100.1",
     "server_up": true,
