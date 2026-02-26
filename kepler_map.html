@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Apollo - Kepler</title>
+    <title>Sauron - Kepler</title>
     <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css" />
     <link href="https://unpkg.com/kepler.gl@3.2.5/umd/keplergl.min.css" rel="stylesheet" />
     <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet" />
@@ -455,7 +455,7 @@
 
     <script>
       const MAPBOX_TOKEN = new URLSearchParams(window.location.search || "").get("mapboxToken") || "";
-      const DATASET_ID = "apollo_live";
+      const DATASET_ID = "sauron_live";
       const DATA_URL = "./sample_data/map_status_sample.json";
       const DEFAULT_POLL_MS = 30 * 1000;
       const MAX_TREND_RUNS = 160;
@@ -519,7 +519,7 @@
           visState: {
             filters: [],
             layers: [{
-              id: "apollo_points",
+              id: "sauron_points",
               type: "point",
               config: {
                 dataId: DATASET_ID,
