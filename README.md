@@ -3,6 +3,42 @@
 ## Dashboard Examples
 
 <p>
+   <strong>State filter (operations menu search)</strong><br/>
+   Single still image showing a state being searched for in the operations menu.
+</p>
+
+<p>
+   <img src="assets/Sauron-State-Filter.png" alt="Operations menu with a state filter search" width="1000" />
+</p>
+
+<p>
+   <strong>ISP outage (real-time still)</strong><br/>
+   Single still image showing an ISP outage in real time.
+</p>
+
+<p>
+   <img src="assets/Sauron-ISP-Outage.png" alt="Real-time ISP outage view on the Sauron dashboard" width="1000" />
+</p>
+
+<p>
+   <strong>Live run change (map update)</strong><br/>
+   GIF showing the map updating live during a run.
+</p>
+
+<p>
+   <img src="assets/Sauron-Run-Change.gif" alt="Sauron map updating live during a run" width="1000" />
+</p>
+
+<p>
+   <strong>Locator (offline stores across states)</strong><br/>
+   GIF showing the visual moving state to state using the offline stores menu.
+</p>
+
+<p>
+   <img src="assets/Sauron-Locator.gif" alt="Sauron locator moving state to state from the offline stores menu" width="1000" />
+</p>
+
+<p>
    <strong>Outage view (local/regional disruption)</strong><br/>
    Demonstrates what a localized outage can look like across a cluster (e.g., natural disaster or local ISP interruption).
 </p>
